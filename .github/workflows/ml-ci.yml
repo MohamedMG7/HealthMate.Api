@@ -1,0 +1,47 @@
+name: ML CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'services/ml/**'
+      - '.github/workflows/ml-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'services/ml/**'
+      - '.github/workflows/ml-ci.yml'
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/ml
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.10.9"
+
+      - run: uv sync --frozen
+
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy app
+      - run: uv run pytest -v --tb=short
+
+  docker:
+    needs: lint-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: services/ml
+          file: services/ml/Dockerfile
+          push: false
+          tags: healthmate-ml:ci

@@ -16,6 +16,25 @@ services:
       timeout: 5s
       retries: 10
 
+  ml:
+    build:
+      context: services/ml
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      ML_ENV: production
+      ML_ARTIFACTS_PATH: /artifacts
+    volumes:
+      - ./services/ml/artifacts:/artifacts:ro
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health', timeout=2).status == 200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
   api:
     build:
       context: .
@@ -24,9 +43,13 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      ml:
+        condition: service_healthy
     env_file: .env
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      MlService__BaseUrl: http://ml:8000
+      MlService__AuthToken: ${ML_AUTH_TOKEN}
     volumes:
       - uploads:/app/Uploads
     expose:

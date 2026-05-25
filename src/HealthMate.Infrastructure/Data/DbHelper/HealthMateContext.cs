@@ -144,11 +144,14 @@ namespace HealthMate.Infrastructure.Data.DbHelper
 				.IsRequired(true)
 				.OnDelete(DeleteBehavior.NoAction); 
 
-			// data seeding
+			// Data seeding. ConcurrencyStamp must be a static literal because the
+			// IdentityRole constructor otherwise assigns a new Guid every time the
+			// model is built, which triggers EF Core's PendingModelChangesWarning
+			// (the model would be non-deterministic across builds).
 			builder.Entity<IdentityRole>().HasData(
-			new IdentityRole { Id = "2", Name = "Admin", NormalizedName = "ADMIN" },
-			new IdentityRole { Id = "0", Name = "Patient", NormalizedName = "PATIENT" },
-			new IdentityRole { Id = "1", Name = "HealthCareProvider", NormalizedName = "HEALTHCAREPROVIDER" } 
+				new IdentityRole { Id = "2", Name = "Admin", NormalizedName = "ADMIN", ConcurrencyStamp = "static-admin-concurrency-stamp" },
+				new IdentityRole { Id = "0", Name = "Patient", NormalizedName = "PATIENT", ConcurrencyStamp = "static-patient-concurrency-stamp" },
+				new IdentityRole { Id = "1", Name = "HealthCareProvider", NormalizedName = "HEALTHCAREPROVIDER", ConcurrencyStamp = "static-healthcareprovider-concurrency-stamp" }
 			);
 			
 		}
