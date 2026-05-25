@@ -5,6 +5,7 @@ COPY HealthMate.sln ./
 COPY src/HealthMate.Api/HealthMate.Api.csproj src/HealthMate.Api/
 COPY src/HealthMate.Application/HealthMate.Application.csproj src/HealthMate.Application/
 COPY src/HealthMate.Infrastructure/HealthMate.Infrastructure.csproj src/HealthMate.Infrastructure/
+COPY src/HealthMate.Sina/HealthMate.Sina.csproj src/HealthMate.Sina/
 COPY tests/HealthMate.Tests/HealthMate.Tests.csproj tests/HealthMate.Tests/
 RUN dotnet restore HealthMate.sln
 
