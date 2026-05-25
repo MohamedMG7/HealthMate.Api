@@ -34,9 +34,22 @@ public sealed class PatientHistoryWriter(TimeProvider clock) : SaveChangesInterc
             .Where(static e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
             .ToArray();
 
+        // Idempotent: any PatientHistory rows already queued in this save cycle mean a duplicate
+        // interceptor registration already captured the change. Skip those patients.
+        var alreadyCaptured = healthMateContext.ChangeTracker
+            .Entries<PatientHistory>()
+            .Where(static h => h.State == EntityState.Added)
+            .Select(static h => h.Entity.Patient_Fhir_Id)
+            .ToHashSet(StringComparer.Ordinal);
+
         foreach (var entry in entries)
         {
             var patient = entry.Entity;
+            if (!string.IsNullOrWhiteSpace(patient.Patient_Fhir_Id) && alreadyCaptured.Contains(patient.Patient_Fhir_Id))
+            {
+                continue;
+            }
+
             var user = patient.ApplicationUser
                 ?? (patient.ApplicationUserId is null
                     ? null

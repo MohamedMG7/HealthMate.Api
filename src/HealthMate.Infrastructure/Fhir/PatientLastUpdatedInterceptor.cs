@@ -43,9 +43,23 @@ public sealed class PatientLastUpdatedInterceptor(TimeProvider clock) : SaveChan
             }
 
             entry.Entity.LastUpdated = now;
-            entry.Entity.RowVersion = entry.State == EntityState.Added
-                ? Math.Max(entry.Entity.RowVersion, 1)
-                : entry.Entity.RowVersion + 1;
+
+            if (entry.State == EntityState.Added)
+            {
+                entry.Entity.RowVersion = Math.Max(entry.Entity.RowVersion, 1);
+                continue;
+            }
+
+            // Idempotent: if RowVersion is already flagged Modified, we (or a duplicate registration of this interceptor)
+            // have already bumped it for this save cycle. Skip to avoid stacking increments.
+            var rowVersionProperty = entry.Property(p => p.RowVersion);
+            if (rowVersionProperty.IsModified)
+            {
+                continue;
+            }
+
+            entry.Entity.RowVersion += 1;
+            rowVersionProperty.IsModified = true;
         }
     }
 }
