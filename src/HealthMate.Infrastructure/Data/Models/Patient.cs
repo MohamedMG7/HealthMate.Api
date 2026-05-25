@@ -14,6 +14,10 @@ namespace HealthMate.Infrastructure.Data.Models
 		public string Governorate { get; set; } = null!;
 		public string City { get; set; } = null!;
         public bool IsVerified { get; set; }
+        public DateTimeOffset LastUpdated { get; set; }
+        public uint RowVersion { get; set; } = 1;
+        public bool IsDeleted { get; set; }
+        public DateTimeOffset? DeletedAt { get; set; }
 
         //link with application user to handle account
         public ApplicationUser ApplicationUser { get; set; } = null!;

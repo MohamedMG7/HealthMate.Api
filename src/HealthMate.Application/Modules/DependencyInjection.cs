@@ -19,8 +19,13 @@ using HealthMate.Application.Manager.UsersManager;
 using HealthMate.Application.Manager.UtilityManager;
 using HealthMate.Application.Managers;
 using HealthMate.Application.Services;
+using HealthMate.Fhir.Mapping;
+using HealthMate.Fhir.Ports;
+using HealthMate.Fhir.Search;
+using HealthMate.Fhir.Serialization;
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
+using HealthMate.Infrastructure.Fhir;
 using HealthMate.Infrastructure.Repositories;
 using HealthMate.Infrastructure.Repositories.AdminRepos;
 using HealthMate.Infrastructure.Repositories.ApplicationUserRepos;
@@ -44,9 +49,12 @@ using HealthMate.Sina.Tools.DrugInteractions;
 using HealthMate.Sina.Tools.Impl;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -66,11 +74,11 @@ public static class DependencyInjection
             });
         });
 
-        services.AddDbContext<HealthMateContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+        services.AddDbContext<HealthMateContext>((sp, options) =>
+            ConfigureHealthMateContext(options, configuration, sp));
 
-        services.AddDbContextFactory<HealthMateContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")), ServiceLifetime.Scoped);
+        services.AddDbContextFactory<HealthMateContext>((sp, options) =>
+            ConfigureHealthMateContext(options, configuration, sp), ServiceLifetime.Scoped);
 
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
         {
@@ -247,6 +255,37 @@ public static class DependencyInjection
         return services;
     }
 
+    public static IServiceCollection AddFhirModule(this IServiceCollection services, IConfiguration configuration)
+    {
+        _ = configuration;
+
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddScoped<PatientLastUpdatedInterceptor>();
+        services.AddScoped<PatientHistoryWriter>();
+        services.AddScoped<IFhirPatientStore, InProcessFhirPatientStore>();
+
+        services.AddSingleton<PatientResourceMapper>();
+        services.AddSingleton<OperationOutcomeFactory>();
+        services.AddSingleton<CapabilityStatementFactory>();
+        services.AddSingleton<PatientBundleAssembler>();
+        services.AddSingleton<PatientSearchParser>();
+        services.AddSingleton<FhirJsonService>();
+        services.AddScoped<FhirContentNegotiationFilter>();
+        services.AddScoped<FhirExceptionFilter>();
+
+        services.Configure<MvcOptions>(options =>
+        {
+            options.Filters.AddService<FhirContentNegotiationFilter>();
+            options.Filters.AddService<FhirExceptionFilter>();
+            if (!options.OutputFormatters.OfType<FhirJsonOutputFormatter>().Any())
+            {
+                options.OutputFormatters.Insert(0, new FhirJsonOutputFormatter());
+            }
+        });
+
+        return services;
+    }
+
     public static IServiceCollection AddMlModule(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<MlServiceOptions>(configuration.GetSection(MlServiceOptions.SectionName));
@@ -270,5 +309,29 @@ public static class DependencyInjection
 
         services.AddScoped<IMachineLearningManager, MachineLearningManager>();
         return services;
+    }
+
+    private static void ConfigureHealthMateContext(
+        DbContextOptionsBuilder options,
+        IConfiguration configuration,
+        IServiceProvider serviceProvider)
+    {
+        options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
+
+        var interceptors = new List<IInterceptor>();
+        if (serviceProvider.GetService<PatientLastUpdatedInterceptor>() is { } lastUpdated)
+        {
+            interceptors.Add(lastUpdated);
+        }
+
+        if (serviceProvider.GetService<PatientHistoryWriter>() is { } historyWriter)
+        {
+            interceptors.Add(historyWriter);
+        }
+
+        if (interceptors.Count > 0)
+        {
+            options.AddInterceptors(interceptors);
+        }
     }
 }

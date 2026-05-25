@@ -1,6 +1,7 @@
 using HealthMate.Api;
 using HealthMate.Application.Manager.AccountManager;
 using HealthMate.Infrastructure.Data.DbHelper;
+using HealthMate.Infrastructure.Fhir;
 using HealthMate.Sina.Llm;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -68,8 +69,16 @@ public sealed class WebAppFixture : IAsyncLifetime
                 services.RemoveAll<IEmailService>();
                 services.RemoveAll<ILlmProviderSelector>();
 
-                services.AddDbContext<HealthMateContext>(options => options.UseNpgsql(connectionString));
-                services.AddDbContextFactory<HealthMateContext>(options => options.UseNpgsql(connectionString), ServiceLifetime.Scoped);
+                services.AddDbContext<HealthMateContext>((sp, options) => options
+                    .UseNpgsql(connectionString)
+                    .AddInterceptors(
+                        sp.GetRequiredService<PatientLastUpdatedInterceptor>(),
+                        sp.GetRequiredService<PatientHistoryWriter>()));
+                services.AddDbContextFactory<HealthMateContext>((sp, options) => options
+                    .UseNpgsql(connectionString)
+                    .AddInterceptors(
+                        sp.GetRequiredService<PatientLastUpdatedInterceptor>(),
+                        sp.GetRequiredService<PatientHistoryWriter>()), ServiceLifetime.Scoped);
                 services.AddScoped<IEmailService, NoopEmailService>();
                 services.AddSingleton<ILlmProviderSelector, TestLlmProviderSelector>();
             });

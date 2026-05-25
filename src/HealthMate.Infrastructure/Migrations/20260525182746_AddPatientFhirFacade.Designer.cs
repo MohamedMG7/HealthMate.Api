@@ -3,6 +3,7 @@ using System;
 using HealthMate.Infrastructure.Data.DbHelper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HealthMate.Infrastructure.Migrations
 {
     [DbContext(typeof(HealthMateContext))]
-    partial class HealthMateContextModelSnapshot : ModelSnapshot
+    [Migration("20260525182746_AddPatientFhirFacade")]
+    partial class AddPatientFhirFacade
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -48,7 +51,7 @@ namespace HealthMate.Infrastructure.Migrations
                     b.HasIndex("ApplicationUserId")
                         .IsUnique();
 
-                    b.ToTable("Admins", (string)null);
+                    b.ToTable("Admins");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Animal", b =>
@@ -90,7 +93,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("Owner_Id");
 
-                    b.ToTable("Animals", (string)null);
+                    b.ToTable("Animals");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.ApplicationUser", b =>
@@ -196,7 +199,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasKey("BodySite_Id");
 
-                    b.ToTable("BodySites", (string)null);
+                    b.ToTable("BodySites");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Condition", b =>
@@ -259,7 +262,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("PaientId");
 
-                    b.ToTable("Conditions", (string)null);
+                    b.ToTable("Conditions");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Disease", b =>
@@ -292,7 +295,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasKey("Disease_Id");
 
-                    b.ToTable("Diseases", (string)null);
+                    b.ToTable("Diseases");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Encounter", b =>
@@ -344,7 +347,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("PatientId");
 
-                    b.ToTable("Encounters", (string)null);
+                    b.ToTable("Encounters");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.HealthCareProvider", b =>
@@ -389,7 +392,7 @@ namespace HealthMate.Infrastructure.Migrations
                     b.HasIndex("ApplicationUserId")
                         .IsUnique();
 
-                    b.ToTable("HealthCareProviders", (string)null);
+                    b.ToTable("HealthCareProviders");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.LabTest", b =>
@@ -424,7 +427,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("patientId");
 
-                    b.ToTable("LabTests", (string)null);
+                    b.ToTable("LabTests");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.LabTestAttribute", b =>
@@ -453,7 +456,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("LabTestAttributes", (string)null);
+                    b.ToTable("LabTestAttributes");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.LabTestResult", b =>
@@ -479,7 +482,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("LabTestId");
 
-                    b.ToTable("LabTestResults", (string)null);
+                    b.ToTable("LabTestResults");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.MedicalImage", b =>
@@ -511,7 +514,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("paitentId");
 
-                    b.ToTable("MedicalImages", (string)null);
+                    b.ToTable("MedicalImages");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Medicine", b =>
@@ -540,7 +543,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Medicines", (string)null);
+                    b.ToTable("Medicines");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.MentalHealthAssessment", b =>
@@ -571,7 +574,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("patientId");
 
-                    b.ToTable("MentalHealthAssessments", (string)null);
+                    b.ToTable("MentalHealthAssessments");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Message", b =>
@@ -610,7 +613,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("Messages", (string)null);
+                    b.ToTable("Messages");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.MessageAttachment", b =>
@@ -635,7 +638,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("MessageId");
 
-                    b.ToTable("MessageAttachments", (string)null);
+                    b.ToTable("MessageAttachments");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Observation", b =>
@@ -693,7 +696,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("PatientId");
 
-                    b.ToTable("Observations", (string)null);
+                    b.ToTable("Observations");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Patient", b =>
@@ -772,7 +775,7 @@ namespace HealthMate.Infrastructure.Migrations
                         .HasDatabaseName("IX_Patients_Patient_Fhir_Id_Active")
                         .HasFilter("\"IsDeleted\" = false");
 
-                    b.ToTable("Patients", (string)null);
+                    b.ToTable("Patients");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.PatientAllergy", b =>
@@ -809,7 +812,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("PatientId", "IsActive");
 
-                    b.ToTable("PatientAllergies", (string)null);
+                    b.ToTable("PatientAllergies");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.PatientHistory", b =>
@@ -941,7 +944,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("PrescriptionId");
 
-                    b.ToTable("PatientMedicines", (string)null);
+                    b.ToTable("PatientMedicines");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Prescription", b =>
@@ -977,7 +980,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("PatientId");
 
-                    b.ToTable("Prescriptions", (string)null);
+                    b.ToTable("Prescriptions");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.SinaSession", b =>
@@ -1007,7 +1010,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("PatientId", "HealthCareProviderId", "Status");
 
-                    b.ToTable("SinaSessions", (string)null);
+                    b.ToTable("SinaSessions");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.SinaTurn", b =>
@@ -1043,7 +1046,7 @@ namespace HealthMate.Infrastructure.Migrations
                     b.HasIndex("SessionId", "OrdinalIndex")
                         .IsUnique();
 
-                    b.ToTable("SinaTurns", (string)null);
+                    b.ToTable("SinaTurns");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.UserDiseaseExperience", b =>
@@ -1063,7 +1066,7 @@ namespace HealthMate.Infrastructure.Migrations
                     b.HasIndex("DiseaseId")
                         .IsUnique();
 
-                    b.ToTable("UserDiseaseExperiences", (string)null);
+                    b.ToTable("UserDiseaseExperiences");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.UserFeedback", b =>
@@ -1089,7 +1092,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("ApplicationUser_Id");
 
-                    b.ToTable("UserFeedbacks", (string)null);
+                    b.ToTable("UserFeedbacks");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.VerificationCode", b =>
@@ -1111,7 +1114,7 @@ namespace HealthMate.Infrastructure.Migrations
                     b.HasIndex("ApplicationUser_Id")
                         .IsUnique();
 
-                    b.ToTable("VerificationCodes", (string)null);
+                    b.ToTable("VerificationCodes");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
