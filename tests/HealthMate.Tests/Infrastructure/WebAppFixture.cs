@@ -1,6 +1,7 @@
 using HealthMate.Api;
 using HealthMate.Application.Manager.AccountManager;
 using HealthMate.Infrastructure.Data.DbHelper;
+using HealthMate.Sina.Llm;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -65,10 +66,12 @@ public sealed class WebAppFixture : IAsyncLifetime
                 services.RemoveAll<DbContextOptions<HealthMateContext>>();
                 services.RemoveAll<IDbContextFactory<HealthMateContext>>();
                 services.RemoveAll<IEmailService>();
+                services.RemoveAll<ILlmProviderSelector>();
 
                 services.AddDbContext<HealthMateContext>(options => options.UseNpgsql(connectionString));
                 services.AddDbContextFactory<HealthMateContext>(options => options.UseNpgsql(connectionString), ServiceLifetime.Scoped);
                 services.AddScoped<IEmailService, NoopEmailService>();
+                services.AddSingleton<ILlmProviderSelector, TestLlmProviderSelector>();
             });
         }
     }
@@ -76,5 +79,21 @@ public sealed class WebAppFixture : IAsyncLifetime
     private sealed class NoopEmailService : IEmailService
     {
         public Task<string> SendEmailAsync(string email, string subject, string message) => Task.FromResult("Email Sent");
+    }
+
+    private sealed class TestLlmProviderSelector : ILlmProviderSelector
+    {
+        private static readonly IClinicalLlmClient Client = new TestClinicalLlmClient();
+        public IClinicalLlmClient GetClient() => Client;
+    }
+
+    private sealed class TestClinicalLlmClient : IClinicalLlmClient
+    {
+        public string ProviderName => "Test";
+
+        public Task<LlmResponse> GenerateAsync(LlmRequest request, CancellationToken ct)
+        {
+            return Task.FromResult(new LlmResponse("Chart reviewed [#P-1].", [], new LlmUsage(0, 0), LlmFinishReason.Stop));
+        }
     }
 }

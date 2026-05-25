@@ -15,7 +15,6 @@ using HealthMate.Application.Manager.MedicalRecordManager;
 using HealthMate.Application.Manager.MessageManager;
 using HealthMate.Application.Manager.ObservationManager;
 using HealthMate.Application.Manager.PatientManager;
-using HealthMate.Application.Manager.SinaChatbot;
 using HealthMate.Application.Manager.UsersManager;
 using HealthMate.Application.Manager.UtilityManager;
 using HealthMate.Application.Managers;
@@ -31,9 +30,18 @@ using HealthMate.Infrastructure.Repositories.HealthRecordRepos;
 using HealthMate.Infrastructure.Repositories.Interfaces;
 using HealthMate.Infrastructure.Repositories.MessageRepos;
 using HealthMate.Infrastructure.Repositories.ObservationRepos;
+using HealthMate.Infrastructure.Repositories.PatientAllergyRepos;
 using HealthMate.Infrastructure.Repositories.PatientRepos;
 using HealthMate.Infrastructure.Repositories.VerificationCodeRepo;
 using HealthMate.Infrastructure.Repositories.VerificationCodeRepos;
+using HealthMate.Infrastructure.Sina;
+using HealthMate.Sina.Llm;
+using HealthMate.Sina.Llm.Providers;
+using HealthMate.Sina.Ports;
+using HealthMate.Sina.Sessions;
+using HealthMate.Sina.Tools;
+using HealthMate.Sina.Tools.DrugInteractions;
+using HealthMate.Sina.Tools.Impl;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -127,7 +135,9 @@ public static class DependencyInjection
     {
         services.AddScoped<IGenericRepository<Animal>, GenericRepository<Animal>>();
         services.AddScoped<IGenericRepository<Patient>, GenericRepository<Patient>>();
+        services.AddScoped<IGenericRepository<PatientAllergy>, GenericRepository<PatientAllergy>>();
         services.AddScoped<IPatientRepo, PatientRepo>();
+        services.AddScoped<IPatientAllergyRepo, PatientAllergyRepo>();
         services.AddScoped<IPatientManager, PatientManager>();
         return services;
     }
@@ -212,11 +222,28 @@ public static class DependencyInjection
 
     public static IServiceCollection AddSinaModule(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddScoped<ContextBuilder>();
-        services.AddScoped<PromptResolver>();
+        services.Configure<SinaLlmConfig>(configuration.GetSection(SinaLlmConfig.SectionName));
+        services.AddHttpClient<GeminiAdapter>().AddStandardResilienceHandler();
+        services.AddHttpClient<OpenAiAdapter>().AddStandardResilienceHandler();
+        services.AddScoped<ILlmProviderSelector, LlmProviderSelector>();
+
+        services.AddScoped<ISinaClock, SystemSinaClock>();
+        services.AddScoped<ISinaClinicalReader, InProcessSinaClinicalReader>();
+        services.AddScoped<ISinaSessionStore, SinaSessionStore>();
+        services.AddScoped<IContextSummarizer, ContextSummarizer>();
+        services.AddScoped<IProactiveAlertEngine, ProactiveAlertEngine>();
+        services.AddScoped<ISinaSafetyFilter, SinaSafetyFilter>();
+        services.AddScoped<IDrugInteractionLookup, LocalRulesDrugInteractionLookup>();
+
+        services.AddScoped<ISinaTool, GetPatientSummaryTool>();
+        services.AddScoped<ISinaTool, GetLabTestTool>();
+        services.AddScoped<ISinaTool, SearchObservationsTool>();
+        services.AddScoped<ISinaTool, GetPrescriptionHistoryTool>();
+        services.AddScoped<ISinaTool, GetEncounterNoteTool>();
+        services.AddScoped<ISinaTool, CheckDrugInteractionsTool>();
+        services.AddScoped<ISinaTool, CheckAllergyConflictTool>();
+        services.AddScoped<ToolRegistry>();
         services.AddScoped<SinaManager>();
-        services.AddHttpClient<GeminiClient>();
-        services.Configure<GeminiConfig>(configuration.GetSection("Gemini"));
         return services;
     }
 

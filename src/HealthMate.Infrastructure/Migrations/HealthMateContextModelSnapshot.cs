@@ -752,6 +752,43 @@ namespace HealthMate.Infrastructure.Migrations
                     b.ToTable("Patients");
                 });
 
+            modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.PatientAllergy", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<int>("PatientId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reaction")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("RecordedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Severity")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Substance")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientId", "IsActive");
+
+                    b.ToTable("PatientAllergies");
+                });
+
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.PatientMedicine", b =>
                 {
                     b.Property<int>("PatientMedicineId")
@@ -830,6 +867,72 @@ namespace HealthMate.Infrastructure.Migrations
                     b.HasIndex("PatientId");
 
                     b.ToTable("Prescriptions");
+                });
+
+            modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.SinaSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("HealthCareProviderId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("LastInteractionAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PatientId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HealthCareProviderId");
+
+                    b.HasIndex("PatientId", "HealthCareProviderId", "Status");
+
+                    b.ToTable("SinaSessions");
+                });
+
+            modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.SinaTurn", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("OrdinalIndex")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("SessionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ToolCallId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ToolName")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SessionId", "OrdinalIndex")
+                        .IsUnique();
+
+                    b.ToTable("SinaTurns");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.UserDiseaseExperience", b =>
@@ -1249,6 +1352,17 @@ namespace HealthMate.Infrastructure.Migrations
                     b.Navigation("ApplicationUser");
                 });
 
+            modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.PatientAllergy", b =>
+                {
+                    b.HasOne("HealthMate.Infrastructure.Data.Models.Patient", "Patient")
+                        .WithMany("Allergies")
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Patient");
+                });
+
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.PatientMedicine", b =>
                 {
                     b.HasOne("HealthMate.Infrastructure.Data.Models.Medicine", "Medicine")
@@ -1290,6 +1404,36 @@ namespace HealthMate.Infrastructure.Migrations
                     b.Navigation("Encounter");
 
                     b.Navigation("Patient");
+                });
+
+            modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.SinaSession", b =>
+                {
+                    b.HasOne("HealthMate.Infrastructure.Data.Models.HealthCareProvider", "HealthCareProvider")
+                        .WithMany()
+                        .HasForeignKey("HealthCareProviderId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("HealthMate.Infrastructure.Data.Models.Patient", "Patient")
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("HealthCareProvider");
+
+                    b.Navigation("Patient");
+                });
+
+            modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.SinaTurn", b =>
+                {
+                    b.HasOne("HealthMate.Infrastructure.Data.Models.SinaSession", "Session")
+                        .WithMany("Turns")
+                        .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Session");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.UserDiseaseExperience", b =>
@@ -1435,6 +1579,8 @@ namespace HealthMate.Infrastructure.Migrations
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Patient", b =>
                 {
+                    b.Navigation("Allergies");
+
                     b.Navigation("Animals");
 
                     b.Navigation("Conditions");
@@ -1455,6 +1601,11 @@ namespace HealthMate.Infrastructure.Migrations
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Prescription", b =>
                 {
                     b.Navigation("PatientMedicines");
+                });
+
+            modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.SinaSession", b =>
+                {
+                    b.Navigation("Turns");
                 });
 #pragma warning restore 612, 618
         }

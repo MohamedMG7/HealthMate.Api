@@ -62,5 +62,18 @@ ML services must never log feature values, patient IDs, or response bodies. The 
 
 Predictor unit tests must build their own synthetic dummy artifact inside the test (`tmp_path` fixture) rather than loading the real grandfathered pkl. Router tests against the real artifact must use clearly synthetic feature values (`hb=4.5`, etc.) — never realistic patient data.
 
+## Sina-Specific Rules
+Adding a new LLM provider requires implementing `IClinicalLlmClient`, adding it to provider selection, adding fixture-based adapter tests, and documenting the model/version in the PR. Provider-specific types must stay under `src/HealthMate.Sina/Llm/Providers/`.
+
+Adding a new Sina tool requires implementing `ISinaTool`, registering it in `AddSinaModule`, depending only on `ISinaClinicalReader`, and adding a unit test. Tools must never depend on HealthMate.Infrastructure or `I*Repo` directly.
+
+`src/HealthMate.Sina/HealthMate.Sina.csproj` must not reference `HealthMate.Infrastructure`; this is the compile-time extraction guard.
+
+Never call `IClinicalLlmClient.GenerateAsync` outside `SinaManager`. All Sina calls must pass through the manager so tool limits, safety filters, citation checks, and persistence apply.
+
+Never inline raw patient PHI in Sina code, tests, fixtures, or logs. Tools return data; logs should only record non-PHI operational fields such as `patientId`, `hcpId`, `provider`, `toolName`, `latencyMs`, and `success`.
+
+`IDrugInteractionLookup` is the boundary for upgrading to a real interaction database. Do not bake interaction logic into individual tools.
+
 ## Out Of Bounds
 Never push to `main`, never run destructive DB commands, and never modify `CONSTITUTION.md` or `AGENTS.md` without an explicit human request.
