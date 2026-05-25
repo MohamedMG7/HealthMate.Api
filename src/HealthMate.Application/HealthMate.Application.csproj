@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\HealthMate.Fhir\HealthMate.Fhir.csproj" />
     <ProjectReference Include="..\HealthMate.Infrastructure\HealthMate.Infrastructure.csproj" />
     <ProjectReference Include="..\HealthMate.Sina\HealthMate.Sina.csproj" />
   </ItemGroup>

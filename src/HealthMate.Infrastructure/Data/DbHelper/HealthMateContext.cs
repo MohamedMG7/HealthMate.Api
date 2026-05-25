@@ -30,6 +30,11 @@ namespace HealthMate.Infrastructure.Data.DbHelper
 			// Table Patient
 			builder.Entity<Patient>().HasKey(sc => sc.Patient_Id); //set Table PK for internal Database quiries 
 			builder.Entity<Patient>().Property(sc => sc.Patient_Fhir_Id).ValueGeneratedOnAdd().HasDefaultValueSql("gen_random_uuid()::text"); //create GUID for Fhir Resoruce
+            builder.Entity<Patient>().Property(sc => sc.LastUpdated).HasColumnType("timestamp with time zone").HasDefaultValueSql("now()");
+            builder.Entity<Patient>().Property(sc => sc.RowVersion).HasConversion<long>().HasColumnType("bigint").HasDefaultValue(1L).IsConcurrencyToken();
+            builder.Entity<Patient>().Property(sc => sc.IsDeleted).HasDefaultValue(false);
+            builder.Entity<Patient>().Property(sc => sc.DeletedAt).HasColumnType("timestamp with time zone");
+            builder.Entity<Patient>().HasIndex(sc => sc.Patient_Fhir_Id).HasDatabaseName("IX_Patients_Patient_Fhir_Id_Active").HasFilter("\"IsDeleted\" = false");
 
 	
 			builder.Entity<Patient>().HasMany(sc => sc.Conditions).WithOne(c => c.Patient).HasForeignKey(c => c.PaientId).OnDelete(DeleteBehavior.NoAction); // one patient has many Conditions
@@ -154,6 +159,21 @@ namespace HealthMate.Infrastructure.Data.DbHelper
 			builder.Entity<PatientAllergy>().HasIndex(a => new { a.PatientId, a.IsActive });
 			builder.Entity<PatientAllergy>().Property(a => a.Substance).IsRequired();
 
+            // Table PatientHistory
+            builder.Entity<PatientHistory>().HasKey(h => h.History_Id);
+            builder.Entity<PatientHistory>().ToTable("PatientHistory");
+            builder.Entity<PatientHistory>().Property(h => h.OperationType)
+                .HasConversion(
+                    v => v == PatientHistoryOperation.Create ? "C" : v == PatientHistoryOperation.Delete ? "D" : "U",
+                    v => v == "C" ? PatientHistoryOperation.Create : v == "D" ? PatientHistoryOperation.Delete : PatientHistoryOperation.Update)
+                .HasColumnType("character(1)");
+            builder.Entity<PatientHistory>().Property(h => h.LastUpdated).HasColumnType("timestamp with time zone");
+            builder.Entity<PatientHistory>().Property(h => h.RecordedAt).HasColumnType("timestamp with time zone").HasDefaultValueSql("now()");
+            builder.Entity<PatientHistory>().Property(h => h.DeletedAt).HasColumnType("timestamp with time zone");
+            builder.Entity<PatientHistory>().Property(h => h.RowVersion).HasConversion<long>().HasColumnType("bigint");
+            builder.Entity<PatientHistory>().HasIndex(h => new { h.Patient_Fhir_Id, h.RowVersion });
+            builder.Entity<PatientHistory>().HasIndex(h => new { h.Patient_Fhir_Id, h.RecordedAt });
+
 			// Table SinaSession
 			builder.Entity<SinaSession>().HasKey(s => s.Id);
 			builder.Entity<SinaSession>()
@@ -192,6 +212,7 @@ namespace HealthMate.Infrastructure.Data.DbHelper
 
 		public DbSet<ApplicationUser> ApplicationUsers { get; set; }
 		public DbSet<Patient> Patients { get; set; }
+        public DbSet<PatientHistory> PatientHistories { get; set; }
 		public DbSet<Admin> Admins { get; set; }
 		public DbSet<HealthCareProvider> HealthCareProviders { get; set; }
 		public DbSet<Condition> Conditions { get; set; }
