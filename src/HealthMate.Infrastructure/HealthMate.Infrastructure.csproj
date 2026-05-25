@@ -24,6 +24,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\HealthMate.Sina\HealthMate.Sina.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Migrations\" />
   </ItemGroup>
 

@@ -3,7 +3,7 @@
 HealthMate.Api is the backend for the open-source HealthMate EHR/CDSS for doctors and small clinics. It focuses on patient records, encounters, clinical observations, lab tests, prescriptions, documents, messaging, mental health assessments, and decision-support features. Read `CONSTITUTION.md` before contributing.
 
 ## Architecture
-HealthMate.Api is a .NET 10 modular monolith backed by PostgreSQL, with modules composed in-process through `AddXxxModule` extensions. The Angular 21 frontend lives in the separate `HealthMate.WebApp` repository. Classical ML runs as a Python FastAPI sidecar (`services/ml/`) on the internal docker network; the .NET API talks to it through an `IMlGateway` HTTP client. Sina remains optional and Gemini-backed for now.
+HealthMate.Api is a .NET 10 modular monolith backed by PostgreSQL, with modules composed in-process through `AddXxxModule` extensions. The Angular 21 frontend lives in the separate `HealthMate.WebApp` repository. Classical ML runs as a Python FastAPI sidecar (`services/ml/`) on the internal docker network; the .NET API talks to it through an `IMlGateway` HTTP client. Sina is a provider-side clinical assistant in `src/HealthMate.Sina/` with session memory, tool calling, citations, and Gemini/OpenAI adapters behind one LLM contract.
 
 ## Quick Start With Docker
 ```bash
@@ -31,8 +31,14 @@ dotnet run --project src/HealthMate.Api
 | `Jwt__Key` | JWT signing key |
 | `Jwt__Issuer` | JWT issuer |
 | `Jwt__Audience` | JWT audience |
-| `Gemini__ApiKey` | Optional Gemini API key for Sina |
-| `Gemini__BaseUrl` | Gemini API base URL |
+| `Sina__Provider` | Sina LLM provider: `Gemini` or `OpenAi` |
+| `Sina__MaxToolCallsPerTurn` | Maximum Sina tool calls per provider message turn |
+| `Sina__Gemini__ApiKey` | Optional Gemini API key for Sina |
+| `Sina__Gemini__BaseUrl` | Gemini API base URL |
+| `Sina__Gemini__Model` | Gemini model name |
+| `Sina__OpenAi__ApiKey` | Optional OpenAI API key for Sina |
+| `Sina__OpenAi__BaseUrl` | OpenAI-compatible API base URL |
+| `Sina__OpenAi__Model` | OpenAI model name, default `gpt-4o-mini` |
 | `EmailSettings__Email` | SMTP sender email |
 | `EmailSettings__Password` | SMTP password |
 | `Cors__AllowedOrigins__0` | First allowed frontend origin |
@@ -50,12 +56,24 @@ ASP.NET Core reads nested environment variables with double underscores, such as
 dotnet test HealthMate.sln
 ```
 
+## Sina Clinical Assistant
+Sina is session-based and provider-only. It preloads a chart summary, persists turns to PostgreSQL, can call structured chart tools, and asks the selected LLM provider through `IClinicalLlmClient`.
+
+| Endpoint | Purpose |
+| --- | --- |
+| `POST /api/Sina/sessions` | Open or resume a patient/provider Sina session. Body: `{ "patientId": 42 }`. |
+| `POST /api/Sina/sessions/{sessionId}/messages` | Send a user message. Body: `{ "content": "..." }`. |
+| `DELETE /api/Sina/sessions/{sessionId}` | Close a Sina session. |
+
+Sina sends substantially more chart context to the configured LLM provider than the old prompt-only flow. Use provider accounts and project settings that match the deployment's privacy and BAA/data-handling requirements.
+
 ## Project Layout
 | Path | Purpose |
 | --- | --- |
 | `src/HealthMate.Api` | API host and controllers |
 | `src/HealthMate.Application` | Application managers and DTOs |
 | `src/HealthMate.Infrastructure` | EF Core, entities, repositories, migrations |
+| `src/HealthMate.Sina` | Sina LLM contracts, tools, session orchestrator, and extraction boundary |
 | `tests/HealthMate.Tests` | Test baseline |
 | `services/ml/` | Python FastAPI sidecar for ML inference. See `services/ml/README.md`. |
 | `deploy/` | Deployment support |

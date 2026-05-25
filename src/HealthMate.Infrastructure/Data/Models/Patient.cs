@@ -34,6 +34,7 @@ namespace HealthMate.Infrastructure.Data.Models
 		public ICollection<PatientMedicine> PatientMedicines { get; set; } = new HashSet<PatientMedicine>();
 		public ICollection<MedicalImage> MedicalImages { get; set; } = new HashSet<MedicalImage>();
 		public ICollection<MentalHealthAssessment> MentalHealthAssessments { get; set; } = new HashSet<MentalHealthAssessment>();
+		public ICollection<PatientAllergy> Allergies { get; set; } = new HashSet<PatientAllergy>();
 
 
     }

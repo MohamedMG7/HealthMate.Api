@@ -144,6 +144,40 @@ namespace HealthMate.Infrastructure.Data.DbHelper
 				.IsRequired(true)
 				.OnDelete(DeleteBehavior.NoAction); 
 
+			// Table PatientAllergy
+			builder.Entity<PatientAllergy>().HasKey(a => a.Id);
+			builder.Entity<PatientAllergy>()
+				.HasOne(a => a.Patient)
+				.WithMany(p => p.Allergies)
+				.HasForeignKey(a => a.PatientId)
+				.OnDelete(DeleteBehavior.NoAction);
+			builder.Entity<PatientAllergy>().HasIndex(a => new { a.PatientId, a.IsActive });
+			builder.Entity<PatientAllergy>().Property(a => a.Substance).IsRequired();
+
+			// Table SinaSession
+			builder.Entity<SinaSession>().HasKey(s => s.Id);
+			builder.Entity<SinaSession>()
+				.HasOne(s => s.Patient)
+				.WithMany()
+				.HasForeignKey(s => s.PatientId)
+				.OnDelete(DeleteBehavior.NoAction);
+			builder.Entity<SinaSession>()
+				.HasOne(s => s.HealthCareProvider)
+				.WithMany()
+				.HasForeignKey(s => s.HealthCareProviderId)
+				.OnDelete(DeleteBehavior.NoAction);
+			builder.Entity<SinaSession>().HasIndex(s => new { s.PatientId, s.HealthCareProviderId, s.Status });
+
+			// Table SinaTurn
+			builder.Entity<SinaTurn>().HasKey(t => t.Id);
+			builder.Entity<SinaTurn>()
+				.HasOne(t => t.Session)
+				.WithMany(s => s.Turns)
+				.HasForeignKey(t => t.SessionId)
+				.OnDelete(DeleteBehavior.Cascade);
+			builder.Entity<SinaTurn>().HasIndex(t => new { t.SessionId, t.OrdinalIndex }).IsUnique();
+			builder.Entity<SinaTurn>().Property(t => t.Content).IsRequired();
+
 			// Data seeding. ConcurrencyStamp must be a static literal because the
 			// IdentityRole constructor otherwise assigns a new Guid every time the
 			// model is built, which triggers EF Core's PendingModelChangesWarning
@@ -179,6 +213,9 @@ namespace HealthMate.Infrastructure.Data.DbHelper
 		public DbSet<Message> Messages { get; set; }
 		public DbSet<MessageAttachment> MessageAttachments { get; set; }
 		public DbSet<MentalHealthAssessment> MentalHealthAssessments { get; set; }
+		public DbSet<PatientAllergy> PatientAllergies { get; set; }
+		public DbSet<SinaSession> SinaSessions { get; set; }
+		public DbSet<SinaTurn> SinaTurns { get; set; }
 
     }
 }

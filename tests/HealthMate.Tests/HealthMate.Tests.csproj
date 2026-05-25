@@ -32,6 +32,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\HealthMate.Api\HealthMate.Api.csproj" />
+    <ProjectReference Include="..\..\src\HealthMate.Sina\HealthMate.Sina.csproj" />
   </ItemGroup>
 
 </Project>
