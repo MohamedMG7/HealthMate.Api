@@ -27,7 +27,7 @@ namespace HealthMate.Api
                 .AddProvidersModule()
                 .AddAdminModule()
                 .AddSinaModule(builder.Configuration)
-                .AddMlModule();
+                .AddMlModule(builder.Configuration);
 
             var app = builder.Build();
 

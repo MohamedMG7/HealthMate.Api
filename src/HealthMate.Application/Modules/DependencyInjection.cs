@@ -39,6 +39,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace HealthMate.Application.Modules;
@@ -219,8 +220,27 @@ public static class DependencyInjection
         return services;
     }
 
-    public static IServiceCollection AddMlModule(this IServiceCollection services)
+    public static IServiceCollection AddMlModule(this IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<MlServiceOptions>(configuration.GetSection(MlServiceOptions.SectionName));
+
+        services.AddHttpClient<IMlGateway, MlGateway>((sp, http) =>
+        {
+            var opts = sp.GetRequiredService<IOptions<MlServiceOptions>>().Value;
+            if (string.IsNullOrWhiteSpace(opts.BaseUrl))
+            {
+                throw new InvalidOperationException("MlService:BaseUrl is not configured.");
+            }
+            http.BaseAddress = new Uri(opts.BaseUrl);
+            http.Timeout = TimeSpan.FromSeconds(5);
+            if (!string.IsNullOrWhiteSpace(opts.AuthToken))
+            {
+                http.DefaultRequestHeaders.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", opts.AuthToken);
+            }
+        })
+        .AddStandardResilienceHandler();
+
         services.AddScoped<IMachineLearningManager, MachineLearningManager>();
         return services;
     }

@@ -1,0 +1,19 @@
+{
+  "name": "anemia",
+  "version": "v0",
+  "trained_at": null,
+  "trained_by": "unknown (inherited)",
+  "dataset_source": "unknown - suspected Kaggle anemia CBC dataset",
+  "framework": "scikit-learn",
+  "framework_version_trained": "1.3.2",
+  "framework_version_runtime": ">=1.3.2,<1.6",
+  "model_type": "RandomForestClassifier",
+  "scaler_type": "StandardScaler",
+  "features": ["Hb", "RBC", "PCV", "MCH", "MCHC"],
+  "classes": [0, 1],
+  "prediction_semantics": "Raw class 1 maps to anemia=true. NOTE: legacy MachineLearningManager (.NET, pre-Plan-#2) used the inverted mapping (raw==0 -> anemia=true), which produced clinically backwards results (healthy CBCs flagged as anemic, severely anemic CBCs marked healthy). Plan #2 corrects the mapping; this is a deliberate behavioural change documented as a bug fix, not a regression. See app/models/anemia/README.md.",
+  "target": "anemia_present (boolean derived from classifier output per prediction_semantics)",
+  "metrics": null,
+  "grandfathered": true,
+  "constitution_exception": "Grandfathered under Plan #2. Replacement required before any new clinical model is added. See ../../../app/models/anemia/README.md."
+}

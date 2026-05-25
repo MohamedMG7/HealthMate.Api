@@ -55,7 +55,9 @@ public sealed class WebAppFixture : IAsyncLifetime
                     ["Jwt:Key"] = "TEST_ONLY_JWT_SIGNING_KEY_NOT_SECRET_00000000000000000000000000000000",
                     ["Jwt:Issuer"] = "HealthMate_Servers",
                     ["Jwt:Audience"] = "HealthMate_Clients",
-                    ["Cors:AllowedOrigins:0"] = "http://localhost:4200"
+                    ["Cors:AllowedOrigins:0"] = "http://localhost:4200",
+                    ["MlService:BaseUrl"] = "http://ml-test.invalid",
+                    ["MlService:AuthToken"] = "test-only-token"
                 });
             });
 

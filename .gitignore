@@ -7,7 +7,15 @@ obj/
 .vscode/.ropeproject/
 TestResults/
 **/TestResults/
-src/HealthMate.Application/MLModels/*.pkl
 src/HealthMate.Api/Uploads/**
 !src/HealthMate.Api/Uploads/**/
 !src/HealthMate.Api/Uploads/**/.gitkeep
+
+# Python ML service
+services/ml/.venv/
+services/ml/__pycache__/
+services/ml/**/__pycache__/
+services/ml/.pytest_cache/
+services/ml/.mypy_cache/
+services/ml/.ruff_cache/
+services/ml/*.egg-info/
