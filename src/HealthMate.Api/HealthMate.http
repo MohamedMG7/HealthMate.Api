@@ -1,0 +1,6 @@
+@HealthMate_HostAddress = http://localhost:5119
+
+GET {{HealthMate_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

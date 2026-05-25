@@ -1,0 +1,7 @@
+.git/
+.env
+**/bin/
+**/obj/
+src/HealthMate.Api/Uploads/*
+!src/HealthMate.Api/Uploads/**/.gitkeep
+tests/**/TestResults/

@@ -1,0 +1,13 @@
+.env
+.claude/
+*.user
+bin/
+obj/
+.vs/
+.vscode/.ropeproject/
+TestResults/
+**/TestResults/
+src/HealthMate.Application/MLModels/*.pkl
+src/HealthMate.Api/Uploads/**
+!src/HealthMate.Api/Uploads/**/
+!src/HealthMate.Api/Uploads/**/.gitkeep
