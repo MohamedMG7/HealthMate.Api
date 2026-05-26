@@ -1,27 +1,28 @@
+using HealthMate.Application.Abstractions.Identity.Ports;
 using HealthMate.Infrastructure.DTO.UserDto;
-using HealthMate.Infrastructure.Identity.Repositories;
+using HealthMate.Infrastructure.Enums;
 
 namespace HealthMate.Application.Manager.UsersManager
 {
 	public class UserManager : IUserManager
 	{
-		private readonly IApplicationUserRepo _userRepo;
-        public UserManager(IApplicationUserRepo userRepo)
+		private readonly IIdentityUserDirectory _userDirectory;
+        public UserManager(IIdentityUserDirectory userDirectory)
         {
-            _userRepo = userRepo;
+            _userDirectory = userDirectory;
         }
 
 		public IEnumerable<UserReadDto> GetAll()
 		{
-			var users =  _userRepo.GetAll().ToList();
+			var users =  _userDirectory.GetAll();
 			var userList = users.Select(x => new UserReadDto { 
 				Id = x.Id,
 				Email =	x.Email,
 				EmailConfirmed = x.EmailConfirmed,
-				First_Name = x.First_Name,
-				Last_Name = x.Last_Name,
+				First_Name = x.FirstName,
+				Last_Name = x.LastName,
 				ImageUrl = x.ImageUrl,
-				UserType = x.UserType,
+				UserType = (UserType)x.UserType,
 				IsActive = x.IsActive
 			});
 
@@ -30,28 +31,28 @@ namespace HealthMate.Application.Manager.UsersManager
 
 		public IEnumerable<ActiveUserReadDto> GetAllActive()
 		{
-			var users = _userRepo.GetAll().Where(x => x.IsActive == true).ToList();
+			var users = _userDirectory.GetAllActive();
 			var userList = users.Select(x => new ActiveUserReadDto
 			{
 				Id = x.Id,
 				Email = x.Email,
 				EmailConfirmed = x.EmailConfirmed,
-				First_Name = x.First_Name,
-				Last_Name = x.Last_Name,
+				First_Name = x.FirstName,
+				Last_Name = x.LastName,
 				ImageUrl = x.ImageUrl,
-				UserType = x.UserType
+				UserType = (UserType)x.UserType
 			});
 			return userList;
 		}
 
 		public string GetUserNameById(string id)
 		{
-			string userName = _userRepo.GetUsernameById(id);
+			string? userName = _userDirectory.GetUserNameById(id);
 
 			if (userName == null)
 				throw new KeyNotFoundException("User not found.");
 
-			return _userRepo.GetUsernameById(id);
+			return userName;
 		}
 	}
 }
