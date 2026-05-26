@@ -1,4 +1,9 @@
+using System.Reflection;
 using System.Text;
+using FluentValidation;
+using HealthMate.Application.Common;
+using HealthMate.Application.Common.Behaviors;
+using HealthMate.Application.Common.Time;
 using HealthMate.Application.Manager;
 using HealthMate.Application.Manager.AccountManager;
 using HealthMate.Application.Manager.AdminManager;
@@ -18,7 +23,10 @@ using HealthMate.Application.Manager.PatientManager;
 using HealthMate.Application.Manager.UsersManager;
 using HealthMate.Application.Manager.UtilityManager;
 using HealthMate.Application.Managers;
+using HealthMate.Application.Patients.Services;
 using HealthMate.Application.Services;
+using HealthMate.Domain.Aggregates.Patient;
+using HealthMate.Domain.Common;
 using HealthMate.Fhir.Mapping;
 using HealthMate.Fhir.Ports;
 using HealthMate.Fhir.Search;
@@ -37,6 +45,7 @@ using HealthMate.Infrastructure.Repositories.MessageRepos;
 using HealthMate.Infrastructure.Repositories.ObservationRepos;
 using HealthMate.Infrastructure.Repositories.PatientAllergyRepos;
 using HealthMate.Infrastructure.Repositories.PatientRepos;
+using HealthMate.Infrastructure.Persistence.Repositories;
 using HealthMate.Infrastructure.Repositories.VerificationCodeRepo;
 using HealthMate.Infrastructure.Repositories.VerificationCodeRepos;
 using HealthMate.Infrastructure.Sina;
@@ -124,7 +133,22 @@ public static class DependencyInjection
 
         services.AddScoped<IFileService, FileService>();
         services.AddScoped<IUtilityManager, UtilityManager>();
+        services.AddApplicationCore();
 
+        return services;
+    }
+
+    public static IServiceCollection AddApplicationCore(this IServiceCollection services)
+    {
+        services.AddHttpContextAccessor();
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddScoped<IDateTimeProvider, SystemDateTimeProvider>();
+        services.AddScoped<IPatientAccountReader, EfPatientAccountReader>();
+        services.AddScoped<IHandlerDispatcher, HandlerDispatcher>();
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+
+        RegisterHandlersAndValidators(services, typeof(DependencyInjection).Assembly);
         return services;
     }
 
@@ -144,6 +168,7 @@ public static class DependencyInjection
         services.AddScoped<IGenericRepository<Animal>, GenericRepository<Animal>>();
         services.AddScoped<IGenericRepository<Patient>, GenericRepository<Patient>>();
         services.AddScoped<IGenericRepository<PatientAllergy>, GenericRepository<PatientAllergy>>();
+        services.AddScoped<IPatientRepository, EfPatientRepository>();
         services.AddScoped<IPatientRepo, PatientRepo>();
         services.AddScoped<IPatientAllergyRepo, PatientAllergyRepo>();
         services.AddScoped<IPatientManager, PatientManager>();
@@ -332,6 +357,30 @@ public static class DependencyInjection
         if (interceptors.Count > 0)
         {
             options.AddInterceptors(interceptors);
+        }
+    }
+
+    private static void RegisterHandlersAndValidators(IServiceCollection services, Assembly assembly)
+    {
+        foreach (var type in assembly.GetTypes().Where(static type => type is { IsAbstract: false, IsInterface: false }))
+        {
+            foreach (var serviceType in type.GetInterfaces())
+            {
+                if (!serviceType.IsGenericType)
+                {
+                    continue;
+                }
+
+                var genericDefinition = serviceType.GetGenericTypeDefinition();
+                if (genericDefinition == typeof(IHandler<,>))
+                {
+                    services.AddScoped(serviceType, type);
+                }
+                else if (genericDefinition == typeof(IValidator<>))
+                {
+                    services.AddScoped(serviceType, type);
+                }
+            }
         }
     }
 }

@@ -22,6 +22,122 @@ namespace HealthMate.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("HealthMate.Domain.Aggregates.Patient.Patient", b =>
+                {
+                    b.Property<int>("Patient_Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Patient_Id"));
+
+                    b.Property<string>("ApplicationUserId")
+                        .HasColumnType("text");
+
+                    b.Property<DateOnly>("BirthDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Gender")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Governorate")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<float?>("Height")
+                        .HasColumnType("real");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("LastUpdated")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("NationalId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("NationalIdImageUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Patient_Fhir_Id")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValueSql("gen_random_uuid()::text");
+
+                    b.Property<long>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(1L);
+
+                    b.Property<float?>("Weight")
+                        .HasColumnType("real");
+
+                    b.HasKey("Patient_Id");
+
+                    b.HasIndex("ApplicationUserId")
+                        .IsUnique();
+
+                    b.HasIndex("Patient_Fhir_Id")
+                        .HasDatabaseName("IX_Patients_Patient_Fhir_Id_Active")
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.ToTable("Patients", (string)null);
+                });
+
+            modelBuilder.Entity("HealthMate.Domain.Aggregates.Patient.PatientAllergy", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<int>("PatientId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reaction")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("RecordedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Severity")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Substance")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientId", "IsActive");
+
+                    b.ToTable("PatientAllergies", (string)null);
+                });
+
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Admin", b =>
                 {
                     b.Property<int>("Admin_Id")
@@ -48,7 +164,7 @@ namespace HealthMate.Infrastructure.Migrations
                     b.HasIndex("ApplicationUserId")
                         .IsUnique();
 
-                    b.ToTable("Admins", (string)null);
+                    b.ToTable("Admins");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Animal", b =>
@@ -90,7 +206,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("Owner_Id");
 
-                    b.ToTable("Animals", (string)null);
+                    b.ToTable("Animals");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.ApplicationUser", b =>
@@ -196,7 +312,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasKey("BodySite_Id");
 
-                    b.ToTable("BodySites", (string)null);
+                    b.ToTable("BodySites");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Condition", b =>
@@ -259,7 +375,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("PaientId");
 
-                    b.ToTable("Conditions", (string)null);
+                    b.ToTable("Conditions");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Disease", b =>
@@ -292,7 +408,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasKey("Disease_Id");
 
-                    b.ToTable("Diseases", (string)null);
+                    b.ToTable("Diseases");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Encounter", b =>
@@ -344,7 +460,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("PatientId");
 
-                    b.ToTable("Encounters", (string)null);
+                    b.ToTable("Encounters");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.HealthCareProvider", b =>
@@ -389,7 +505,7 @@ namespace HealthMate.Infrastructure.Migrations
                     b.HasIndex("ApplicationUserId")
                         .IsUnique();
 
-                    b.ToTable("HealthCareProviders", (string)null);
+                    b.ToTable("HealthCareProviders");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.LabTest", b =>
@@ -424,7 +540,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("patientId");
 
-                    b.ToTable("LabTests", (string)null);
+                    b.ToTable("LabTests");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.LabTestAttribute", b =>
@@ -453,7 +569,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("LabTestAttributes", (string)null);
+                    b.ToTable("LabTestAttributes");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.LabTestResult", b =>
@@ -479,7 +595,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("LabTestId");
 
-                    b.ToTable("LabTestResults", (string)null);
+                    b.ToTable("LabTestResults");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.MedicalImage", b =>
@@ -511,7 +627,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("paitentId");
 
-                    b.ToTable("MedicalImages", (string)null);
+                    b.ToTable("MedicalImages");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Medicine", b =>
@@ -540,7 +656,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Medicines", (string)null);
+                    b.ToTable("Medicines");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.MentalHealthAssessment", b =>
@@ -571,7 +687,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("patientId");
 
-                    b.ToTable("MentalHealthAssessments", (string)null);
+                    b.ToTable("MentalHealthAssessments");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Message", b =>
@@ -610,7 +726,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("Messages", (string)null);
+                    b.ToTable("Messages");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.MessageAttachment", b =>
@@ -635,7 +751,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("MessageId");
 
-                    b.ToTable("MessageAttachments", (string)null);
+                    b.ToTable("MessageAttachments");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Observation", b =>
@@ -693,123 +809,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("PatientId");
 
-                    b.ToTable("Observations", (string)null);
-                });
-
-            modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Patient", b =>
-                {
-                    b.Property<int>("Patient_Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Patient_Id"));
-
-                    b.Property<string>("ApplicationUserId")
-                        .HasColumnType("text");
-
-                    b.Property<DateOnly>("BirthDate")
-                        .HasColumnType("date");
-
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Gender")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Governorate")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<float?>("Height")
-                        .HasColumnType("real");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<bool>("IsVerified")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTimeOffset>("LastUpdated")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("now()");
-
-                    b.Property<string>("NationalId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("NationalIdImageUrl")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Patient_Fhir_Id")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("text")
-                        .HasDefaultValueSql("gen_random_uuid()::text");
-
-                    b.Property<long>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasDefaultValue(1L);
-
-                    b.Property<float?>("Weight")
-                        .HasColumnType("real");
-
-                    b.HasKey("Patient_Id");
-
-                    b.HasIndex("ApplicationUserId")
-                        .IsUnique();
-
-                    b.HasIndex("Patient_Fhir_Id")
-                        .HasDatabaseName("IX_Patients_Patient_Fhir_Id_Active")
-                        .HasFilter("\"IsDeleted\" = false");
-
-                    b.ToTable("Patients", (string)null);
-                });
-
-            modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.PatientAllergy", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("text");
-
-                    b.Property<int>("PatientId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Reaction")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("RecordedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Severity")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Substance")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PatientId", "IsActive");
-
-                    b.ToTable("PatientAllergies", (string)null);
+                    b.ToTable("Observations");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.PatientHistory", b =>
@@ -941,7 +941,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("PrescriptionId");
 
-                    b.ToTable("PatientMedicines", (string)null);
+                    b.ToTable("PatientMedicines");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Prescription", b =>
@@ -977,7 +977,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("PatientId");
 
-                    b.ToTable("Prescriptions", (string)null);
+                    b.ToTable("Prescriptions");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.SinaSession", b =>
@@ -1007,7 +1007,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("PatientId", "HealthCareProviderId", "Status");
 
-                    b.ToTable("SinaSessions", (string)null);
+                    b.ToTable("SinaSessions");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.SinaTurn", b =>
@@ -1043,7 +1043,7 @@ namespace HealthMate.Infrastructure.Migrations
                     b.HasIndex("SessionId", "OrdinalIndex")
                         .IsUnique();
 
-                    b.ToTable("SinaTurns", (string)null);
+                    b.ToTable("SinaTurns");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.UserDiseaseExperience", b =>
@@ -1063,7 +1063,7 @@ namespace HealthMate.Infrastructure.Migrations
                     b.HasIndex("DiseaseId")
                         .IsUnique();
 
-                    b.ToTable("UserDiseaseExperiences", (string)null);
+                    b.ToTable("UserDiseaseExperiences");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.UserFeedback", b =>
@@ -1089,7 +1089,7 @@ namespace HealthMate.Infrastructure.Migrations
 
                     b.HasIndex("ApplicationUser_Id");
 
-                    b.ToTable("UserFeedbacks", (string)null);
+                    b.ToTable("UserFeedbacks");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.VerificationCode", b =>
@@ -1111,7 +1111,7 @@ namespace HealthMate.Infrastructure.Migrations
                     b.HasIndex("ApplicationUser_Id")
                         .IsUnique();
 
-                    b.ToTable("VerificationCodes", (string)null);
+                    b.ToTable("VerificationCodes");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -1269,6 +1269,25 @@ namespace HealthMate.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("HealthMate.Domain.Aggregates.Patient.Patient", b =>
+                {
+                    b.HasOne("HealthMate.Infrastructure.Data.Models.ApplicationUser", null)
+                        .WithOne()
+                        .HasForeignKey("HealthMate.Domain.Aggregates.Patient.Patient", "ApplicationUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+                });
+
+            modelBuilder.Entity("HealthMate.Domain.Aggregates.Patient.PatientAllergy", b =>
+                {
+                    b.HasOne("HealthMate.Domain.Aggregates.Patient.Patient", "Patient")
+                        .WithMany("Allergies")
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Patient");
+                });
+
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Admin", b =>
                 {
                     b.HasOne("HealthMate.Infrastructure.Data.Models.ApplicationUser", "ApplicationUser")
@@ -1282,8 +1301,8 @@ namespace HealthMate.Infrastructure.Migrations
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Animal", b =>
                 {
-                    b.HasOne("HealthMate.Infrastructure.Data.Models.Patient", "Patient")
-                        .WithMany("Animals")
+                    b.HasOne("HealthMate.Domain.Aggregates.Patient.Patient", "Patient")
+                        .WithMany()
                         .HasForeignKey("Owner_Id")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
@@ -1309,8 +1328,8 @@ namespace HealthMate.Infrastructure.Migrations
                         .HasForeignKey("EncounterId")
                         .OnDelete(DeleteBehavior.NoAction);
 
-                    b.HasOne("HealthMate.Infrastructure.Data.Models.Patient", "Patient")
-                        .WithMany("Conditions")
+                    b.HasOne("HealthMate.Domain.Aggregates.Patient.Patient", "Patient")
+                        .WithMany()
                         .HasForeignKey("PaientId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
@@ -1331,8 +1350,8 @@ namespace HealthMate.Infrastructure.Migrations
                         .HasForeignKey("HealthCareProviderId")
                         .OnDelete(DeleteBehavior.NoAction);
 
-                    b.HasOne("HealthMate.Infrastructure.Data.Models.Patient", "Patient")
-                        .WithMany("Encounters")
+                    b.HasOne("HealthMate.Domain.Aggregates.Patient.Patient", "Patient")
+                        .WithMany()
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
@@ -1355,8 +1374,8 @@ namespace HealthMate.Infrastructure.Migrations
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.LabTest", b =>
                 {
-                    b.HasOne("HealthMate.Infrastructure.Data.Models.Patient", "patient")
-                        .WithMany("LabTests")
+                    b.HasOne("HealthMate.Domain.Aggregates.Patient.Patient", "patient")
+                        .WithMany()
                         .HasForeignKey("patientId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
@@ -1385,8 +1404,8 @@ namespace HealthMate.Infrastructure.Migrations
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.MedicalImage", b =>
                 {
-                    b.HasOne("HealthMate.Infrastructure.Data.Models.Patient", "patient")
-                        .WithMany("MedicalImages")
+                    b.HasOne("HealthMate.Domain.Aggregates.Patient.Patient", "patient")
+                        .WithMany()
                         .HasForeignKey("paitentId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
@@ -1396,8 +1415,8 @@ namespace HealthMate.Infrastructure.Migrations
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.MentalHealthAssessment", b =>
                 {
-                    b.HasOne("HealthMate.Infrastructure.Data.Models.Patient", "Patient")
-                        .WithMany("MentalHealthAssessments")
+                    b.HasOne("HealthMate.Domain.Aggregates.Patient.Patient", "Patient")
+                        .WithMany()
                         .HasForeignKey("patientId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
@@ -1442,34 +1461,13 @@ namespace HealthMate.Infrastructure.Migrations
                         .HasForeignKey("HealthMate.Infrastructure.Data.Models.Observation", "BodySiteId")
                         .OnDelete(DeleteBehavior.NoAction);
 
-                    b.HasOne("HealthMate.Infrastructure.Data.Models.Patient", "Patient")
-                        .WithMany("Observations")
+                    b.HasOne("HealthMate.Domain.Aggregates.Patient.Patient", "Patient")
+                        .WithMany()
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("BodySite");
-
-                    b.Navigation("Patient");
-                });
-
-            modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Patient", b =>
-                {
-                    b.HasOne("HealthMate.Infrastructure.Data.Models.ApplicationUser", "ApplicationUser")
-                        .WithOne()
-                        .HasForeignKey("HealthMate.Infrastructure.Data.Models.Patient", "ApplicationUserId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.Navigation("ApplicationUser");
-                });
-
-            modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.PatientAllergy", b =>
-                {
-                    b.HasOne("HealthMate.Infrastructure.Data.Models.Patient", "Patient")
-                        .WithMany("Allergies")
-                        .HasForeignKey("PatientId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
 
                     b.Navigation("Patient");
                 });
@@ -1482,8 +1480,8 @@ namespace HealthMate.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("HealthMate.Infrastructure.Data.Models.Patient", "Patient")
-                        .WithMany("PatientMedicines")
+                    b.HasOne("HealthMate.Domain.Aggregates.Patient.Patient", "Patient")
+                        .WithMany()
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
@@ -1506,7 +1504,7 @@ namespace HealthMate.Infrastructure.Migrations
                         .HasForeignKey("EncounterId")
                         .OnDelete(DeleteBehavior.NoAction);
 
-                    b.HasOne("HealthMate.Infrastructure.Data.Models.Patient", "Patient")
+                    b.HasOne("HealthMate.Domain.Aggregates.Patient.Patient", "Patient")
                         .WithMany()
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1525,7 +1523,7 @@ namespace HealthMate.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("HealthMate.Infrastructure.Data.Models.Patient", "Patient")
+                    b.HasOne("HealthMate.Domain.Aggregates.Patient.Patient", "Patient")
                         .WithMany()
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.NoAction)
@@ -1639,6 +1637,11 @@ namespace HealthMate.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("HealthMate.Domain.Aggregates.Patient.Patient", b =>
+                {
+                    b.Navigation("Allergies");
+                });
+
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.ApplicationUser", b =>
                 {
                     b.Navigation("UserDiseaseExperiences");
@@ -1686,27 +1689,6 @@ namespace HealthMate.Infrastructure.Migrations
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Message", b =>
                 {
                     b.Navigation("Attachments");
-                });
-
-            modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Patient", b =>
-                {
-                    b.Navigation("Allergies");
-
-                    b.Navigation("Animals");
-
-                    b.Navigation("Conditions");
-
-                    b.Navigation("Encounters");
-
-                    b.Navigation("LabTests");
-
-                    b.Navigation("MedicalImages");
-
-                    b.Navigation("MentalHealthAssessments");
-
-                    b.Navigation("Observations");
-
-                    b.Navigation("PatientMedicines");
                 });
 
             modelBuilder.Entity("HealthMate.Infrastructure.Data.Models.Prescription", b =>

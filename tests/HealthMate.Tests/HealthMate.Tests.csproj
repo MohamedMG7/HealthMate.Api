@@ -31,6 +31,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\HealthMate.Application\HealthMate.Application.csproj" />
+    <ProjectReference Include="..\..\src\HealthMate.Domain\HealthMate.Domain.csproj" />
     <ProjectReference Include="..\..\src\HealthMate.Api\HealthMate.Api.csproj" />
     <ProjectReference Include="..\..\src\HealthMate.Fhir\HealthMate.Fhir.csproj" />
     <ProjectReference Include="..\..\src\HealthMate.Infrastructure\HealthMate.Infrastructure.csproj" />

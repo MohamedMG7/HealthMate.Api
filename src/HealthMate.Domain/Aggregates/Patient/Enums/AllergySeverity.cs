@@ -1,4 +1,4 @@
-namespace HealthMate.Infrastructure.Enums;
+namespace HealthMate.Domain.Aggregates.Patient.Enums;
 
 public enum AllergySeverity
 {

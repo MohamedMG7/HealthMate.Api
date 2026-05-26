@@ -1,6 +1,9 @@
+using HealthMate.Domain.Aggregates.Patient;
+using HealthMate.Domain.Common;
 using HealthMate.Infrastructure.DTO.AdminDto;
 using HealthMate.Application.Manager.AccountManager;
 using HealthMate.Application.Manager.PatientManager;
+using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
 using HealthMate.Infrastructure.Repositories;
 using HealthMate.Infrastructure.Repositories.AdminRepos;
@@ -13,11 +16,13 @@ namespace HealthMate.Application.Manager.AdminManager
 		private readonly IGenericRepository<Patient> _patientManager;
 		private readonly IEmailService _emailService;
 		private readonly IAdminRepo _adminRepo;
-        public AdminManager(IGenericRepository<Patient> patientManager, IEmailService emailService, IAdminRepo adminRepo)
+        private readonly IDateTimeProvider _clock;
+        public AdminManager(IGenericRepository<Patient> patientManager, IEmailService emailService, IAdminRepo adminRepo, IDateTimeProvider clock)
         {
             _patientManager = patientManager;
 			_emailService = emailService;
 			_adminRepo = adminRepo;
+            _clock = clock;
         }
 
 		public void ApproveOrRejectPatient(AdminApprovalDto approvalDto)
@@ -26,15 +31,21 @@ namespace HealthMate.Application.Manager.AdminManager
 			// i need to send emails with confirmation or not
 
 			var patient = _adminRepo.GetPatientWithApplicationUserData(approvalDto.PatientId);
-			string patientEmail = patient.ApplicationUser.Email;
 
 			if (patient == null)
 				throw new KeyNotFoundException("Patient not found.");
+
+            var context = (HealthMateContext)_patientManager.GetContext();
+            string patientEmail = context.Users
+                .Where(user => user.Id == patient.ApplicationUserId)
+                .Select(user => user.Email!)
+                .FirstOrDefault() ?? throw new KeyNotFoundException("Patient account not found.");
+
 			if (patient.IsVerified == false)
 			{
 				if (approvalDto.IsApproved)
 				{
-					patient.IsVerified = true;
+					patient.Verify(_clock);
 					_patientManager.Update(patient);
 
 					// send email to the user 
@@ -60,15 +71,30 @@ namespace HealthMate.Application.Manager.AdminManager
 
 		public IEnumerable<AdminVerifyPatientReadDto> GetPatients()
 		{
-			var PatientsModed = _patientManager.GetAll().Include(p => p.ApplicationUser).Where(p => p.IsVerified == false).ToList(); // get all the unverified patients
+			var context = (HealthMateContext)_patientManager.GetContext();
+			var PatientsModed = _patientManager.GetAll().Where(p => p.IsVerified == false).ToList(); // get all the unverified patients
+			var userIds = PatientsModed
+				.Select(p => p.ApplicationUserId)
+				.Where(id => !string.IsNullOrWhiteSpace(id))
+				.Distinct()
+				.ToArray();
+			var users = context.Users
+				.Where(user => userIds.Contains(user.Id))
+				.ToDictionary(user => user.Id);
 
-			var PatientsList = PatientsModed.Select(x => new AdminVerifyPatientReadDto { 
-				Id = x.Patient_Id,
-				First_Name = x.ApplicationUser.First_Name,
-				Last_Name = x.ApplicationUser.Last_Name,
-				NationalIdNumber = x.NationalId,
-				NatinoalIDImageUrl = x.NationalIdImageUrl,
-				ApplicationUserImageUrl = x.ApplicationUser.ImageUrl
+			var PatientsList = PatientsModed.Select(x =>
+			{
+				ApplicationUser? user = null;
+				var hasUser = x.ApplicationUserId is not null && users.TryGetValue(x.ApplicationUserId, out user);
+				return new AdminVerifyPatientReadDto
+				{
+					Id = x.Patient_Id,
+					First_Name = hasUser ? user!.First_Name : "No Data",
+					Last_Name = hasUser ? user!.Last_Name : "No Data",
+					NationalIdNumber = x.NationalId.Value,
+					NatinoalIDImageUrl = x.NationalIdImageUrl,
+					ApplicationUserImageUrl = hasUser ? user!.ImageUrl : ""
+				};
 			});
 
 			return PatientsList;

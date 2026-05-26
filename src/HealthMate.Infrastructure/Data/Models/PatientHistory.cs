@@ -1,4 +1,4 @@
-using HealthMate.Infrastructure.Enums;
+using HealthMate.Domain.Common.Enums;
 
 namespace HealthMate.Infrastructure.Data.Models;
 

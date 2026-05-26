@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using EndEncounterDto;
+using HealthMate.Domain.Aggregates.Patient.ValueObjects;
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
 using HealthMate.Infrastructure.DTO;
@@ -91,20 +92,31 @@ namespace HealthMate.Infrastructure.Repositories.HealthCareProviderRepos
 				.OrderByDescending(e => e.EndDate)
 				.Select(e => new
 				{
-					PatientName = e.Patient.ApplicationUser.First_Name + " " + e.Patient.ApplicationUser.Last_Name,
-					Patient_Id = e.Patient.NationalId,
+					PatientUserId = e.Patient.ApplicationUserId,
+					PatientNationalId = e.Patient.NationalId,
 					EncounterId = e.Encounter_Id,
 					EncounterDate = e.EndDate,
 					Diagnosis = e.Conditions.FirstOrDefault()!.Disease.Display_Name
 				})
 				.ToListAsync();
 
+			var patientUserIds = rawData
+				.Select(data => data.PatientUserId)
+				.Where(static id => !string.IsNullOrWhiteSpace(id))
+				.Distinct()
+				.ToArray();
+			var patientUsers = await context.Users
+				.Where(user => patientUserIds.Contains(user.Id))
+				.ToDictionaryAsync(user => user.Id);
+
 			// Step 2: Map the raw data to EncounterSummary records
 			var encounterSummaries = rawData.Select(data => new EncounterTableSummaryReadDto
 			{
 				EncounterId = data.EncounterId,
-				Patient_Name = data.PatientName,
-				Patient_Id = data.Patient_Id,
+				Patient_Name = data.PatientUserId is not null && patientUsers.TryGetValue(data.PatientUserId, out var user)
+					? user.First_Name + " " + user.Last_Name
+					: "No Data",
+				Patient_Id = data.PatientNationalId.Value,
 				EncounterDate = DateOnly.FromDateTime(data.EncounterDate),
 				Diagnosis = data.Diagnosis
 			});
@@ -325,8 +337,9 @@ namespace HealthMate.Infrastructure.Repositories.HealthCareProviderRepos
 
 		#region Start Encounter Functionality
 		public async Task<int> GetPatientIdByPatientNationalId(string PatientNationalId){
+			var nationalId = NationalId.FromTrusted(PatientNationalId);
 			var patient = await _context.Patients
-				.FirstOrDefaultAsync(patient => patient.NationalId == PatientNationalId);
+				.FirstOrDefaultAsync(patient => patient.NationalId == nationalId);
 			return patient.Patient_Id;
 		}
 		#endregion

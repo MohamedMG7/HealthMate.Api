@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using HealthMate.Domain.Aggregates.Patient;
 using HealthMate.Infrastructure.Enums;
 
 namespace HealthMate.Infrastructure.Data.Models

@@ -1,15 +1,18 @@
+using HealthMate.Domain.Aggregates.Patient;
+using HealthMate.Domain.Aggregates.Patient.ValueObjects;
+using HealthMate.Domain.Common;
 using HealthMate.Fhir.Ports;
 using HealthMate.Fhir.Ports.Dtos;
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
-using HealthMate.Infrastructure.Enums;
 using Microsoft.EntityFrameworkCore;
+using DomainGender = HealthMate.Domain.Common.Enums.Gender;
 
 namespace HealthMate.Infrastructure.Fhir;
 
 public sealed class InProcessFhirPatientStore(
     HealthMateContext context,
-    TimeProvider clock) : IFhirPatientStore
+    IDateTimeProvider clock) : IFhirPatientStore
 {
     private const string FhirPlaceholderNationalIdImage = "fhir_patient_national_id.png";
 
@@ -17,17 +20,21 @@ public sealed class InProcessFhirPatientStore(
     {
         var patient = await context.Patients
             .AsNoTracking()
-            .Include(p => p.ApplicationUser)
             .SingleOrDefaultAsync(p => p.Patient_Fhir_Id == fhirId, ct);
 
-        return patient is null ? null : ToSnapshot(patient);
+        if (patient is null)
+        {
+            return null;
+        }
+
+        var user = await FindUserAsync(patient.ApplicationUserId, ct);
+        return ToSnapshot(patient, user);
     }
 
     public async Task<FhirPatientSearchResult> SearchAsync(FhirPatientSearchQuery query, CancellationToken ct)
     {
         var patients = context.Patients
             .AsNoTracking()
-            .Include(p => p.ApplicationUser)
             .Where(static p => !p.IsDeleted);
 
         if (query.Ids.Count > 0)
@@ -42,17 +49,14 @@ public sealed class InProcessFhirPatientStore(
 
         if (query.Name is not null)
         {
-            var lowered = query.Name.Value.ToLowerInvariant();
-            patients = query.Name.Exact
-                ? patients.Where(p => p.ApplicationUser != null
-                    && (p.ApplicationUser.First_Name + " " + p.ApplicationUser.Last_Name).ToLower() == lowered)
-                : patients.Where(p => p.ApplicationUser != null
-                    && (p.ApplicationUser.First_Name + " " + p.ApplicationUser.Last_Name).ToLower().Contains(lowered));
+            var userIds = await FindUserIdsByNameAsync(query.Name, ct);
+            patients = patients.Where(p => p.ApplicationUserId != null && userIds.Contains(p.ApplicationUserId));
         }
 
         if (query.Identifier is not null)
         {
-            patients = patients.Where(p => p.NationalId == query.Identifier.Value);
+            var nationalId = NationalId.FromTrusted(query.Identifier.Value);
+            patients = patients.Where(p => p.NationalId == nationalId);
         }
 
         foreach (var filter in query.BirthDate)
@@ -79,25 +83,30 @@ public sealed class InProcessFhirPatientStore(
             .Take(query.Count)
             .ToListAsync(ct);
 
-        return new FhirPatientSearchResult(page.Select(ToSnapshot).ToArray(), total, query.Offset, query.Count);
+        var users = await FindUsersByPatientPageAsync(page, ct);
+        return new FhirPatientSearchResult(page.Select(patient => ToSnapshot(patient, users.GetValueOrDefault(patient.ApplicationUserId))).ToArray(), total, query.Offset, query.Count);
     }
 
     public async Task<FhirPatientSnapshot> CreateAsync(FhirPatientSnapshot snapshot, CancellationToken ct)
     {
-        var patient = new Patient
+        var patient = Patient.Create(
+            NationalId.Create(snapshot.NationalId),
+            snapshot.BirthDate,
+            ToGender(snapshot.Gender),
+            Governorate.Create(snapshot.Governorate),
+            City.Create(snapshot.City),
+            userId: null,
+            nationalIdImageUrl: FhirPlaceholderNationalIdImage);
+
+        if (!string.IsNullOrWhiteSpace(snapshot.FhirId))
         {
-            Patient_Fhir_Id = string.IsNullOrWhiteSpace(snapshot.FhirId) ? Guid.NewGuid().ToString() : snapshot.FhirId,
-            NationalId = snapshot.NationalId,
-            NationalIdImageUrl = FhirPlaceholderNationalIdImage,
-            BirthDate = snapshot.BirthDate,
-            Gender = ToGender(snapshot.Gender),
-            Governorate = snapshot.Governorate,
-            City = snapshot.City,
-            // IsVerified is admin-managed; FHIR-created patients land unverified until an admin reviews them.
-            IsDeleted = snapshot.IsDeleted,
-            DeletedAt = snapshot.IsDeleted ? clock.GetUtcNow() : null,
-            RowVersion = 1
-        };
+            patient.AssignFhirId(snapshot.FhirId);
+        }
+
+        if (snapshot.IsDeleted)
+        {
+            patient.MarkSoftDeleted(clock);
+        }
 
         context.Patients.Add(patient);
         await context.SaveChangesAsync(ct);
@@ -108,7 +117,6 @@ public sealed class InProcessFhirPatientStore(
     public async Task<FhirPatientSnapshot> UpdateAsync(FhirPatientSnapshot snapshot, uint expectedVersion, CancellationToken ct)
     {
         var patient = await context.Patients
-            .Include(p => p.ApplicationUser)
             .SingleOrDefaultAsync(p => p.Patient_Fhir_Id == snapshot.FhirId, ct);
 
         if (patient is null)
@@ -121,14 +129,21 @@ public sealed class InProcessFhirPatientStore(
             throw new FhirConcurrencyException("Patient", snapshot.FhirId);
         }
 
-        patient.NationalId = snapshot.NationalId;
-        patient.BirthDate = snapshot.BirthDate;
-        patient.Gender = ToGender(snapshot.Gender);
-        patient.Governorate = snapshot.Governorate;
-        patient.City = snapshot.City;
+        patient.UpdateDemographics(
+            NationalId.Create(snapshot.NationalId),
+            snapshot.BirthDate,
+            ToGender(snapshot.Gender),
+            Governorate.Create(snapshot.Governorate),
+            City.Create(snapshot.City));
         // IsVerified is admin-managed and intentionally not touched here; FHIR PUT must not flip verification status.
-        patient.IsDeleted = snapshot.IsDeleted;
-        patient.DeletedAt = snapshot.IsDeleted ? patient.DeletedAt ?? clock.GetUtcNow() : null;
+        if (snapshot.IsDeleted)
+        {
+            patient.MarkSoftDeleted(clock);
+        }
+        else
+        {
+            patient.RestoreFromSoftDelete();
+        }
 
         try
         {
@@ -160,8 +175,7 @@ public sealed class InProcessFhirPatientStore(
             return;
         }
 
-        patient.IsDeleted = true;
-        patient.DeletedAt = clock.GetUtcNow();
+        patient.MarkSoftDeleted(clock);
 
         try
         {
@@ -246,10 +260,10 @@ public sealed class InProcessFhirPatientStore(
         var ordered = query as IOrderedQueryable<Patient>;
         return sort.Field switch
         {
-            "name" when sort.Descending && thenBy => ordered!.ThenByDescending(p => p.ApplicationUser == null ? "" : p.ApplicationUser.First_Name + " " + p.ApplicationUser.Last_Name),
-            "name" when sort.Descending => query.OrderByDescending(p => p.ApplicationUser == null ? "" : p.ApplicationUser.First_Name + " " + p.ApplicationUser.Last_Name),
-            "name" when thenBy => ordered!.ThenBy(p => p.ApplicationUser == null ? "" : p.ApplicationUser.First_Name + " " + p.ApplicationUser.Last_Name),
-            "name" => query.OrderBy(p => p.ApplicationUser == null ? "" : p.ApplicationUser.First_Name + " " + p.ApplicationUser.Last_Name),
+            "name" when sort.Descending && thenBy => ordered!.ThenByDescending(p => p.ApplicationUserId ?? string.Empty),
+            "name" when sort.Descending => query.OrderByDescending(p => p.ApplicationUserId ?? string.Empty),
+            "name" when thenBy => ordered!.ThenBy(p => p.ApplicationUserId ?? string.Empty),
+            "name" => query.OrderBy(p => p.ApplicationUserId ?? string.Empty),
             "birthdate" when sort.Descending && thenBy => ordered!.ThenByDescending(p => p.BirthDate),
             "birthdate" when sort.Descending => query.OrderByDescending(p => p.BirthDate),
             "birthdate" when thenBy => ordered!.ThenBy(p => p.BirthDate),
@@ -261,18 +275,18 @@ public sealed class InProcessFhirPatientStore(
         };
     }
 
-    private static FhirPatientSnapshot ToSnapshot(Patient patient)
+    private static FhirPatientSnapshot ToSnapshot(Patient patient, ApplicationUser? user)
     {
         return new FhirPatientSnapshot(
             patient.Patient_Fhir_Id,
-            patient.NationalId,
-            patient.ApplicationUser is null ? null : $"{patient.ApplicationUser.First_Name} {patient.ApplicationUser.Last_Name}".Trim(),
+            patient.NationalId.Value,
+            user is null ? null : $"{user.First_Name} {user.Last_Name}".Trim(),
             patient.BirthDate,
             FromGender(patient.Gender),
-            patient.Governorate,
-            patient.City,
-            patient.ApplicationUser?.PhoneNumber,
-            patient.ApplicationUser?.Email,
+            patient.Governorate.Value,
+            patient.City.Value,
+            user?.PhoneNumber,
+            user?.Email,
             patient.IsVerified,
             patient.LastUpdated,
             patient.RowVersion,
@@ -299,24 +313,24 @@ public sealed class InProcessFhirPatientStore(
         return new FhirPatientHistoryEntry(snapshot, ToFhirOperation(history.OperationType), history.RecordedAt);
     }
 
-    private static Gender ToGender(string gender)
+    private static DomainGender ToGender(string gender)
     {
         return gender.Equals("female", StringComparison.OrdinalIgnoreCase)
-            ? Gender.Female
-            : Gender.Male;
+            ? DomainGender.Female
+            : DomainGender.Male;
     }
 
-    private static bool TryParseGender(string gender, out Gender parsed)
+    private static bool TryParseGender(string gender, out DomainGender parsed)
     {
         if (gender.Equals("male", StringComparison.OrdinalIgnoreCase))
         {
-            parsed = Gender.Male;
+            parsed = DomainGender.Male;
             return true;
         }
 
         if (gender.Equals("female", StringComparison.OrdinalIgnoreCase))
         {
-            parsed = Gender.Female;
+            parsed = DomainGender.Female;
             return true;
         }
 
@@ -324,9 +338,49 @@ public sealed class InProcessFhirPatientStore(
         return false;
     }
 
-    private static string FromGender(Gender gender)
+    private static string FromGender(DomainGender gender)
     {
-        return gender == Gender.Female ? "female" : "male";
+        return gender == DomainGender.Female ? "female" : "male";
+    }
+
+    private async Task<ApplicationUser?> FindUserAsync(string? userId, CancellationToken ct)
+    {
+        return string.IsNullOrWhiteSpace(userId)
+            ? null
+            : await context.Users.AsNoTracking().FirstOrDefaultAsync(user => user.Id == userId, ct);
+    }
+
+    private async Task<string[]> FindUserIdsByNameAsync(FhirStringSearch name, CancellationToken ct)
+    {
+        var lowered = name.Value.ToLowerInvariant();
+        var users = context.Users.AsNoTracking();
+
+        users = name.Exact
+            ? users.Where(user => (user.First_Name + " " + user.Last_Name).ToLower() == lowered)
+            : users.Where(user => (user.First_Name + " " + user.Last_Name).ToLower().Contains(lowered));
+
+        return await users.Select(user => user.Id).ToArrayAsync(ct);
+    }
+
+    private async Task<Dictionary<string, ApplicationUser>> FindUsersByPatientPageAsync(IReadOnlyCollection<Patient> patients, CancellationToken ct)
+    {
+        var userIds = patients
+            .Select(patient => patient.ApplicationUserId)
+            .Where(static id => !string.IsNullOrWhiteSpace(id))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        if (userIds.Length == 0)
+        {
+            return new Dictionary<string, ApplicationUser>(StringComparer.Ordinal);
+        }
+
+        var users = await context.Users
+            .AsNoTracking()
+            .Where(user => userIds.Contains(user.Id))
+            .ToListAsync(ct);
+
+        return users.ToDictionary(user => user.Id, StringComparer.Ordinal);
     }
 
     private static FhirHistoryOperation ToFhirOperation(PatientHistoryOperation operation)

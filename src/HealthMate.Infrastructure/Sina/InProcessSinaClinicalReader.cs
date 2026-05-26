@@ -64,7 +64,7 @@ public class InProcessSinaClinicalReader : ISinaClinicalReader
             $"#P-{patient.Patient_Id}",
             patient.Gender.ToString(),
             CalculateAge(patient.BirthDate),
-            patient.Governorate,
+            patient.Governorate.Value,
             CalculateBmi(patient.Weight, patient.Height),
             conditions,
             allergies,

@@ -70,13 +70,16 @@ Sina sends substantially more chart context to the configured LLM provider than 
 ## Project Layout
 | Path | Purpose |
 | --- | --- |
-| `src/HealthMate.Api` | API host and controllers |
-| `src/HealthMate.Application` | Application managers and DTOs |
-| `src/HealthMate.Infrastructure` | EF Core, entities, repositories, migrations |
+| `src/HealthMate.Api` | API host, controllers, and API middleware |
+| `src/HealthMate.Domain` | Domain primitives, aggregate roots, value objects, and repository ports |
+| `src/HealthMate.Application` | Commands, queries, handlers, validation/logging pipeline, remaining legacy managers |
+| `src/HealthMate.Infrastructure` | EF Core, legacy entities, repository adapters, migrations |
 | `src/HealthMate.Sina` | Sina LLM contracts, tools, session orchestrator, and extraction boundary |
 | `tests/HealthMate.Tests` | Test baseline |
 | `services/ml/` | Python FastAPI sidecar for ML inference. See `services/ml/README.md`. |
 | `deploy/` | Deployment support |
+
+New aggregate work should follow the Patient aggregate pattern: invariants in Domain, use cases in Application handlers, EF adapters/configuration in Infrastructure, and thin API controllers.
 
 ## Models
 

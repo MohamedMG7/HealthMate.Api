@@ -1,3 +1,4 @@
+using HealthMate.Domain.Aggregates.Patient;
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
 using Microsoft.EntityFrameworkCore;
@@ -50,21 +51,21 @@ public sealed class PatientHistoryWriter(TimeProvider clock) : SaveChangesInterc
                 continue;
             }
 
-            var user = patient.ApplicationUser
-                ?? (patient.ApplicationUserId is null
-                    ? null
-                    : healthMateContext.Users.Local.FirstOrDefault(u => u.Id == patient.ApplicationUserId));
+            var user = patient.ApplicationUserId is null
+                ? null
+                : healthMateContext.Users.Local.FirstOrDefault(u => u.Id == patient.ApplicationUserId)
+                    ?? healthMateContext.Users.Find(patient.ApplicationUserId);
 
             healthMateContext.PatientHistories.Add(new PatientHistory
             {
                 Patient_Id = patient.Patient_Id,
                 Patient_Fhir_Id = patient.Patient_Fhir_Id,
-                NationalId = patient.NationalId,
+                NationalId = patient.NationalId.Value,
                 NationalIdImageUrl = patient.NationalIdImageUrl,
                 BirthDate = patient.BirthDate,
                 Gender = patient.Gender,
-                Governorate = patient.Governorate,
-                City = patient.City,
+                Governorate = patient.Governorate.Value,
+                City = patient.City.Value,
                 IsVerified = patient.IsVerified,
                 ApplicationUserId = patient.ApplicationUserId,
                 Name = user is null ? null : $"{user.First_Name} {user.Last_Name}".Trim(),

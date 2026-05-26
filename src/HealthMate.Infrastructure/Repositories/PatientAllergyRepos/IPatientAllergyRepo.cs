@@ -1,4 +1,4 @@
-using HealthMate.Infrastructure.Data.Models;
+using HealthMate.Domain.Aggregates.Patient;
 
 namespace HealthMate.Infrastructure.Repositories.PatientAllergyRepos;
 

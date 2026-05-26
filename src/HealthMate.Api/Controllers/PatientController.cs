@@ -1,10 +1,10 @@
 using HealthMate.Infrastructure.DTO.PatientDto.AnimalPatientDtos;
-using HealthMate.Infrastructure.DTO.PatientDto.HumanPatientDtos;
-using HealthMate.Infrastructure.DTO;
+using HealthMate.Application.Common;
 using HealthMate.Application.Manager.PatientManager;
-using HealthMate.Application.Manager.UsersManager;
+using HealthMate.Application.Patients.Commands;
+using HealthMate.Application.Patients.Contracts;
+using HealthMate.Application.Patients.Queries;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HealthMate.Api.Controllers
@@ -13,34 +13,37 @@ namespace HealthMate.Api.Controllers
 	[ApiController]
 	public class PatientController : ControllerBase
 	{
+		private readonly IHandlerDispatcher _dispatcher;
 		private readonly IPatientManager _patientManager;
-		public PatientController(IPatientManager patientManager)
+
+		public PatientController(IHandlerDispatcher dispatcher, IPatientManager patientManager)
 		{
+			_dispatcher = dispatcher;
 			_patientManager = patientManager;
 		}
 
 		[Authorize(policy:"AdminOnly")]
 		[HttpGet]
-		public IActionResult GetAll()
+		public async Task<IActionResult> GetAll(CancellationToken ct)
 		{
-			var Patients = _patientManager.GetAllHumanPatients();
+			var patients = await _dispatcher.DispatchAsync(new ListPatientsQuery(), ct);
 
-			if (Patients == null || !Patients.Any())
+			if (!patients.Any())
 			{
 				return NotFound("No Patients Found");
 			}
 
-			return Ok(Patients);
+			return Ok(patients);
 		}
 
 		[Authorize(policy:"AdminOnly")]
 		[HttpGet]
 		[Route("VerifiedPatients")]
-		public IActionResult GetAllVerified()
+		public async Task<IActionResult> GetAllVerified(CancellationToken ct)
 		{
-			var activeHumanPatients = _patientManager.GetAllVerifiedHumanPatients();
+			var activeHumanPatients = await _dispatcher.DispatchAsync(new ListVerifiedPatientsQuery(), ct);
 
-			if (activeHumanPatients == null || !activeHumanPatients.Any())
+			if (!activeHumanPatients.Any())
 			{
 				return NotFound("No active patients found.");
 			}
@@ -50,10 +53,20 @@ namespace HealthMate.Api.Controllers
 
 		
 		[HttpPost]
-		public IActionResult AddHumanPatient(HumanPatientAddDto HumanPatient) 
+		public async Task<IActionResult> AddHumanPatient(HumanPatientAddDto humanPatient, CancellationToken ct)
 		{
-			_patientManager.AddHumanPatient(HumanPatient);
-			return Ok($"Patient Added Succesfully");
+			var result = await _dispatcher.DispatchAsync(new RegisterHumanPatientCommand(
+				humanPatient.NationalId,
+				humanPatient.NationalIdImageUrl,
+				humanPatient.BirthDate,
+				humanPatient.Gender,
+				humanPatient.Governorate,
+				humanPatient.City,
+				humanPatient.ApplicationUserId,
+				humanPatient.Weight,
+				humanPatient.Height), ct);
+
+			return Created($"/api/Patient/{result.PatientId}", result);
 		}
 		
 		[Authorize(policy:"PatientOnly")]
@@ -68,7 +81,7 @@ namespace HealthMate.Api.Controllers
 		[Authorize(policy: "PatientOnly")]
 		[HttpGet]
 		[Route("GetPatientDashboard")]
-		public async Task<IActionResult> GetPatientDashboard([FromQuery] int patientId)
+		public async Task<IActionResult> GetPatientDashboard([FromQuery] int patientId, CancellationToken ct)
 		{
 			// Validate patientId and periodInDays
 			if (patientId <= 0)
@@ -76,19 +89,8 @@ namespace HealthMate.Api.Controllers
 				return BadRequest("Invalid patient ID or period in days.");
 			}
 
-			try
-			{
-				var dashboardData = await _patientManager.GetMobilePatientDashboardDataAsync(patientId);
-				if (dashboardData != null)
-				{
-					return Ok(dashboardData);
-				}
-				return NotFound("No dashboard data found for the specified patient.");
-			}
-			catch (Exception ex)
-			{
-				return StatusCode(StatusCodes.Status500InternalServerError, $"Internal Server Error: {ex.Message}");
-			}
+			var dashboardData = await _dispatcher.DispatchAsync(new GetPatientDashboardQuery(patientId), ct);
+			return Ok(dashboardData);
 		}
 		
 		//[Authorize(policy:"PatientOnly")]

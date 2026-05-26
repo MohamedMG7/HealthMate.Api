@@ -20,6 +20,7 @@
 /// </remarks>
 
 
+using HealthMate.Domain.Aggregates.Patient;
 using HealthMate.Infrastructure.DTO.AccountDto;
 using HealthMate.Infrastructure.Data.Models;
 using HealthMate.Infrastructure.Repositories;

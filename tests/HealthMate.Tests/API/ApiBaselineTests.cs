@@ -3,11 +3,15 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
+using HealthMate.Domain.Aggregates.Patient;
+using HealthMate.Domain.Aggregates.Patient.ValueObjects;
+using HealthMate.Domain.Identity;
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
 using HealthMate.Infrastructure.Enums;
 using HealthMate.Tests.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using DomainGender = HealthMate.Domain.Common.Enums.Gender;
 
 namespace HealthMate.Tests.Api;
 
@@ -53,17 +57,16 @@ public sealed class ApiBaselineTests(WebAppFixture fixture) : IClassFixture<WebA
         using (var scope = fixture.Factory.Services.CreateScope())
         {
             var context = scope.ServiceProvider.GetRequiredService<HealthMateContext>();
-            context.Patients.Add(new Patient
-            {
-                ApplicationUserId = userId,
-                NationalId = "00000000000000",
-                NationalIdImageUrl = "patient_zero_national_id.png",
-                BirthDate = new DateOnly(2000, 1, 1),
-                Gender = Gender.Male,
-                Governorate = "Fake_Governorate",
-                City = "Fake_City",
-                IsVerified = true
-            });
+            var patient = Patient.Create(
+                NationalId.Create("00000000000000"),
+                new DateOnly(2000, 1, 1),
+                DomainGender.Male,
+                Governorate.Create("Fake_Governorate"),
+                City.Create("Fake_City"),
+                UserId.Create(userId!),
+                "patient_zero_national_id.png");
+            patient.Verify(FixedDateTimeProvider.Instance);
+            context.Patients.Add(patient);
             await context.SaveChangesAsync();
         }
 

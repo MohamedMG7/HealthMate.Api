@@ -1,3 +1,6 @@
+using HealthMate.Domain.Aggregates.Patient;
+using HealthMate.Domain.Aggregates.Patient.ValueObjects;
+using HealthMate.Domain.Identity;
 using HealthMate.Infrastructure.DTO.PatientDto.AnimalPatientDtos;
 using HealthMate.Infrastructure.DTO.PatientDto.HumanPatientDtos;
 using HealthMate.Infrastructure.Data.Models;
@@ -49,19 +52,16 @@ namespace HealthMate.Application.Manager.PatientManager
 
 		public void AddHumanPatient(HumanPatientAddDto HumanPatient)
 		{
-			var HPatient = new Patient 
-			{ 
-				NationalId = HumanPatient.NationalId,
-				NationalIdImageUrl = HumanPatient.NationalIdImageUrl,
-				Gender = HumanPatient.Gender,
-				BirthDate = HumanPatient.BirthDate,
-				City = HumanPatient.City,
-				Governorate = HumanPatient.Governorate,
-				IsVerified = false,
-				ApplicationUserId = HumanPatient.ApplicationUserId,
-				Weight = HumanPatient.Weight,
-				Height = HumanPatient.Height
-			};
+			var HPatient = Patient.Create(
+				NationalId.Create(HumanPatient.NationalId),
+				HumanPatient.BirthDate,
+				HumanPatient.Gender,
+				Governorate.Create(HumanPatient.Governorate),
+				City.Create(HumanPatient.City),
+				UserId.Create(HumanPatient.ApplicationUserId),
+				HumanPatient.NationalIdImageUrl,
+				HumanPatient.Weight,
+				HumanPatient.Height);
 
 			_patientRepo.Add(HPatient);
 			_patientRepo.Save();
@@ -75,11 +75,11 @@ namespace HealthMate.Application.Manager.PatientManager
 				Patient_Id = x.Patient_Id,
 				Patient_Fhir_Id = x.Patient_Fhir_Id,
 				BirthDate = x.BirthDate,
-				City = x.City,
+				City = x.City.Value,
 				Gender = x.Gender,
-				Governorate = x.Governorate,
+				Governorate = x.Governorate.Value,
 				IsVerified = x.IsVerified,
-				NationalId = x.NationalId,
+				NationalId = x.NationalId.Value,
 				NationalIdImageUrl = x.NationalIdImageUrl,
 				Weight = x.Weight,
 				Height = x.Height
@@ -97,10 +97,10 @@ namespace HealthMate.Application.Manager.PatientManager
 				Patient_Id = x.Patient_Id,
 				Patient_Fhir_Id = x.Patient_Fhir_Id,
 				BirthDate = x.BirthDate,
-				City = x.City,
+				City = x.City.Value,
 				Gender = x.Gender,
-				Governorate = x.Governorate,
-				NationalId = x.NationalId,
+				Governorate = x.Governorate.Value,
+				NationalId = x.NationalId.Value,
 				NationalIdImageUrl = x.NationalIdImageUrl,
 				Weight = x.Weight,
 				Height = x.Height

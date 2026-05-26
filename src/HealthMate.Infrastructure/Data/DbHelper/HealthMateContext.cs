@@ -1,4 +1,6 @@
+using HealthMate.Domain.Aggregates.Patient;
 using HealthMate.Infrastructure.Data.Models;
+using HealthMate.Infrastructure.Persistence.Configurations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -16,6 +18,8 @@ namespace HealthMate.Infrastructure.Data.DbHelper
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
 			base.OnModelCreating(builder);
+			builder.ApplyConfiguration(new PatientConfiguration());
+			builder.ApplyConfiguration(new PatientAllergyConfiguration());
 
 
 
@@ -27,21 +31,10 @@ namespace HealthMate.Infrastructure.Data.DbHelper
 			builder.Entity<UserDiseaseExperience>().HasOne(sc => sc.Disease).WithOne().HasForeignKey<UserDiseaseExperience>(sc => sc.DiseaseId).OnDelete(DeleteBehavior.NoAction); // every experince include only one disease
 			builder.Entity<UserDiseaseExperience>().Property(sc => sc.Experince).IsRequired(true);
 
-			// Table Patient
-			builder.Entity<Patient>().HasKey(sc => sc.Patient_Id); //set Table PK for internal Database quiries 
-			builder.Entity<Patient>().Property(sc => sc.Patient_Fhir_Id).ValueGeneratedOnAdd().HasDefaultValueSql("gen_random_uuid()::text"); //create GUID for Fhir Resoruce
-            builder.Entity<Patient>().Property(sc => sc.LastUpdated).HasColumnType("timestamp with time zone").HasDefaultValueSql("now()");
-            builder.Entity<Patient>().Property(sc => sc.RowVersion).HasConversion<long>().HasColumnType("bigint").HasDefaultValue(1L).IsConcurrencyToken();
-            builder.Entity<Patient>().Property(sc => sc.IsDeleted).HasDefaultValue(false);
-            builder.Entity<Patient>().Property(sc => sc.DeletedAt).HasColumnType("timestamp with time zone");
-            builder.Entity<Patient>().HasIndex(sc => sc.Patient_Fhir_Id).HasDatabaseName("IX_Patients_Patient_Fhir_Id_Active").HasFilter("\"IsDeleted\" = false");
-
-	
-			builder.Entity<Patient>().HasMany(sc => sc.Conditions).WithOne(c => c.Patient).HasForeignKey(c => c.PaientId).OnDelete(DeleteBehavior.NoAction); // one patient has many Conditions
-			builder.Entity<Patient>().HasMany(sc => sc.Observations).WithOne(c => c.Patient).HasForeignKey(sc => sc.PatientId).OnDelete(DeleteBehavior.NoAction); // one Patient has many Observations
-			builder.Entity<Patient>().HasMany(sc => sc.Encounters).WithOne(c => c.Patient).HasForeignKey(sc => sc.PatientId).OnDelete(DeleteBehavior.NoAction); // one Patient has many Encounters
-			builder.Entity<Patient>().HasOne(sc => sc.ApplicationUser).WithOne().HasForeignKey<Patient>(sc => sc.ApplicationUserId).IsRequired(false).OnDelete(DeleteBehavior.NoAction); // every patient should have one account
-			builder.Entity<Patient>().HasMany(sc => sc.Animals).WithOne(c => c.Patient).HasForeignKey(a => a.Owner_Id).IsRequired(true).OnDelete(DeleteBehavior.NoAction); // every Patient Can Have Multiple Animals
+			builder.Entity<Condition>().HasOne(sc => sc.Patient).WithMany().HasForeignKey(c => c.PaientId).OnDelete(DeleteBehavior.NoAction); // one patient has many Conditions
+			builder.Entity<Observation>().HasOne(sc => sc.Patient).WithMany().HasForeignKey(sc => sc.PatientId).OnDelete(DeleteBehavior.NoAction); // one Patient has many Observations
+			builder.Entity<Encounter>().HasOne(sc => sc.Patient).WithMany().HasForeignKey(sc => sc.PatientId).OnDelete(DeleteBehavior.NoAction); // one Patient has many Encounters
+			builder.Entity<Animal>().HasOne(sc => sc.Patient).WithMany().HasForeignKey(a => a.Owner_Id).IsRequired(true).OnDelete(DeleteBehavior.NoAction); // every Patient Can Have Multiple Animals
 
 			// Table ApplicationUser
 			builder.Entity<ApplicationUser>().HasKey(sc => sc.Id);
@@ -96,7 +89,7 @@ namespace HealthMate.Infrastructure.Data.DbHelper
 
 			//Table LabTest
 			builder.Entity<LabTest>().HasKey(sc => sc.LabTestId);
-			builder.Entity<LabTest>().HasOne(sc => sc.patient).WithMany(sc => sc.LabTests).HasForeignKey(sc => sc.patientId).IsRequired(true).OnDelete(DeleteBehavior.NoAction);
+			builder.Entity<LabTest>().HasOne(sc => sc.patient).WithMany().HasForeignKey(sc => sc.patientId).IsRequired(true).OnDelete(DeleteBehavior.NoAction);
 
 			//Table LabTestAttribute
 			builder.Entity<LabTestAttribute>().HasKey(sc => sc.Id);
@@ -109,14 +102,14 @@ namespace HealthMate.Infrastructure.Data.DbHelper
 			//Table PatientMedicine
 			builder.Entity<PatientMedicine>().HasKey(pm => pm.PatientMedicineId);
 			
-			builder.Entity<PatientMedicine>().HasOne(pm => pm.Patient).WithMany(p => p.PatientMedicines)
+			builder.Entity<PatientMedicine>().HasOne(pm => pm.Patient).WithMany()
 			.HasForeignKey(pm => pm.PatientId).OnDelete(DeleteBehavior.NoAction);
 			builder.Entity<PatientMedicine>().HasOne(pm => pm.Medicine).WithMany(m => m.PatientMedicines)
 			.HasForeignKey(pm => pm.MedicineId).OnDelete(DeleteBehavior.NoAction);
 
 			//Table MedicalImages
 			builder.Entity<MedicalImage>().HasKey(mi => mi.MedicalImageId);
-			builder.Entity<MedicalImage>().HasOne(mi => mi.patient).WithMany(mi => mi.MedicalImages).HasForeignKey(mi => mi.paitentId).IsRequired(true).OnDelete(DeleteBehavior.NoAction);
+			builder.Entity<MedicalImage>().HasOne(mi => mi.patient).WithMany().HasForeignKey(mi => mi.paitentId).IsRequired(true).OnDelete(DeleteBehavior.NoAction);
 			#endregion
 
 			//Table Prescription
@@ -144,20 +137,10 @@ namespace HealthMate.Infrastructure.Data.DbHelper
 
 			builder.Entity<MentalHealthAssessment>()
 				.HasOne(m => m.Patient)
-				.WithMany(p => p.MentalHealthAssessments)
+				.WithMany()
 				.HasForeignKey(m => m.patientId)
 				.IsRequired(true)
 				.OnDelete(DeleteBehavior.NoAction); 
-
-			// Table PatientAllergy
-			builder.Entity<PatientAllergy>().HasKey(a => a.Id);
-			builder.Entity<PatientAllergy>()
-				.HasOne(a => a.Patient)
-				.WithMany(p => p.Allergies)
-				.HasForeignKey(a => a.PatientId)
-				.OnDelete(DeleteBehavior.NoAction);
-			builder.Entity<PatientAllergy>().HasIndex(a => new { a.PatientId, a.IsActive });
-			builder.Entity<PatientAllergy>().Property(a => a.Substance).IsRequired();
 
             // Table PatientHistory
             builder.Entity<PatientHistory>().HasKey(h => h.History_Id);

@@ -4,6 +4,8 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using FluentAssertions;
+using HealthMate.Domain.Aggregates.Patient.ValueObjects;
+using HealthMate.Domain.Identity;
 using HealthMate.Fhir.Extensions;
 using HealthMate.Fhir.Mapping;
 using HealthMate.Fhir.Ports;
@@ -18,7 +20,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 
-using DataPatient = HealthMate.Infrastructure.Data.Models.Patient;
+using DomainPatient = HealthMate.Domain.Aggregates.Patient.Patient;
+using DomainGender = HealthMate.Domain.Common.Enums.Gender;
 using FhirPatient = Hl7.Fhir.Model.Patient;
 using SecurityClaim = System.Security.Claims.Claim;
 using ThreadingTask = System.Threading.Tasks.Task;
@@ -131,7 +134,7 @@ public sealed class FhirPatientFacadeTests(WebAppFixture fixture) : IClassFixtur
         var context = scope.ServiceProvider.GetRequiredService<HealthMateContext>();
         var persisted = context.Patients.AsNoTracking().Single(p => p.Patient_Fhir_Id == fhirId);
         persisted.IsVerified.Should().BeTrue("FHIR PUT must not flip the admin-managed verification flag");
-        persisted.City.Should().Be("Fake_City_Verified_PUT");
+        persisted.City.Value.Should().Be("Fake_City_Verified_PUT");
     }
 
     [Fact]
@@ -182,20 +185,17 @@ public sealed class FhirPatientFacadeTests(WebAppFixture fixture) : IClassFixtur
         };
 
         context.Users.AddRange(patientUser, providerUser);
-        var patient = new DataPatient
-        {
-            ApplicationUserId = patientUser.Id,
-            ApplicationUser = patientUser,
-            NationalId = "00000000000000",
-            NationalIdImageUrl = "patient_zero_national_id.png",
-            BirthDate = new DateOnly(2000, 1, 1),
-            Gender = Gender.Female,
-            Governorate = "Fake_Governorate",
-            City = "Fake_City",
-            IsVerified = true,
-            Weight = 70,
-            Height = 170
-        };
+        var patient = DomainPatient.Create(
+            NationalId.Create("00000000000000"),
+            new DateOnly(2000, 1, 1),
+            DomainGender.Female,
+            Governorate.Create("Fake_Governorate"),
+            City.Create("Fake_City"),
+            UserId.Create(patientUser.Id),
+            "patient_zero_national_id.png",
+            70,
+            170);
+        patient.Verify(FixedDateTimeProvider.Instance);
         var provider = new HealthCareProvider
         {
             ApplicationUserId = providerUser.Id,
