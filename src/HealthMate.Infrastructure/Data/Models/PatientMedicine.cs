@@ -1,3 +1,5 @@
+using HealthMate.Domain.Aggregates.Patient;
+
 namespace HealthMate.Infrastructure.Data.Models
 {
     public class PatientMedicine

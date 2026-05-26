@@ -7,6 +7,7 @@ using HealthMate.Infrastructure.Repositories.ObservationRepos;
 using HealthMate.Infrastructure.DTO.PatientDto.HumanPatientDtos;
 using HealthMate.Infrastructure.Repositories.PatientRepos;
 using HealthMate.Application.Manager.UtilityManager;
+using HealthMate.Infrastructure.Data.DbHelper;
 
 namespace HealthMate.Application.Manager.ObservationManager
 {
@@ -49,7 +50,16 @@ namespace HealthMate.Application.Manager.ObservationManager
 
 		public IEnumerable<ObservationReadDto> GetAllObservations()
 		{
-			var observations = _observationRepo.GetAll().Include(sc => sc.BodySite).Include(sc => sc.Patient.ApplicationUser).ToList();
+			var observations = _observationRepo.GetAll().Include(sc => sc.BodySite).Include(sc => sc.Patient).ToList();
+			var context = (HealthMateContext)_observationRepo.GetContext();
+			var patientUserIds = observations
+				.Select(o => o.Patient.ApplicationUserId)
+				.Where(id => !string.IsNullOrWhiteSpace(id))
+				.Distinct()
+				.ToArray();
+			var patientUsers = context.Users
+				.Where(user => patientUserIds.Contains(user.Id))
+				.ToDictionary(user => user.Id);
 
 			var observationList = observations.Select(x => new ObservationReadDto
 			{
@@ -62,7 +72,7 @@ namespace HealthMate.Application.Manager.ObservationManager
 				Interpertation= x.Interpertation,
 				ValueQuanitity= x.ValueQuanitity,
 				ValueUnit = x.ValueUnit,
-				PatientName = x.Patient.ApplicationUser.First_Name != null ? x.Patient.ApplicationUser.First_Name : "No Data",
+				PatientName = x.Patient.ApplicationUserId is not null && patientUsers.TryGetValue(x.Patient.ApplicationUserId, out var user) ? user.First_Name : "No Data",
 				BodySiteName = x.BodySite != null ? x.BodySite.DisplayName : "No Data",
 			});
 

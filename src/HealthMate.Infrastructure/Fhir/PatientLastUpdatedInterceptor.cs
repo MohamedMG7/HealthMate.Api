@@ -1,5 +1,5 @@
+using HealthMate.Domain.Aggregates.Patient;
 using HealthMate.Infrastructure.Data.DbHelper;
-using HealthMate.Infrastructure.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
@@ -39,14 +39,12 @@ public sealed class PatientLastUpdatedInterceptor(TimeProvider clock) : SaveChan
 
             if (string.IsNullOrWhiteSpace(entry.Entity.Patient_Fhir_Id))
             {
-                entry.Entity.Patient_Fhir_Id = Guid.NewGuid().ToString();
+                entry.Entity.AssignFhirId(Guid.NewGuid().ToString());
             }
-
-            entry.Entity.LastUpdated = now;
 
             if (entry.State == EntityState.Added)
             {
-                entry.Entity.RowVersion = Math.Max(entry.Entity.RowVersion, 1);
+                entry.Entity.ApplyPersistenceVersion(now, Math.Max(entry.Entity.RowVersion, 1));
                 continue;
             }
 
@@ -58,7 +56,7 @@ public sealed class PatientLastUpdatedInterceptor(TimeProvider clock) : SaveChan
                 continue;
             }
 
-            entry.Entity.RowVersion += 1;
+            entry.Entity.ApplyPersistenceVersion(now, entry.Entity.RowVersion + 1);
             rowVersionProperty.IsModified = true;
         }
     }

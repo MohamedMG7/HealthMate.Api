@@ -1,3 +1,4 @@
+using HealthMate.Domain.Common.Enums;
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.DTO.ConditionDto;
 using HealthMate.Infrastructure.DTO.EncounterDto;
@@ -5,7 +6,6 @@ using HealthMate.Infrastructure.DTO.LabTestDto;
 using HealthMate.Infrastructure.DTO.MedicalImageDto;
 using HealthMate.Infrastructure.DTO.MedicineDto;
 using HealthMate.Infrastructure.DTO.PrescriptionDto;
-using HealthMate.Infrastructure.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
@@ -22,10 +22,10 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
         public async Task<(string Name, DateOnly BirthDate, float? Weight, float? Height, Gender Gender)> GetPatientGeneralInfoAsync(int patientId)
 		{
 			var result = await _context.Patients
-				.Where(p => p.Patient_Id == patientId).Include(p => p.ApplicationUser).AsNoTracking()
+				.Where(p => p.Patient_Id == patientId).AsNoTracking()
 				.Select(p => new
 				{
-					Name = p.ApplicationUser.First_Name + " " + p.ApplicationUser.Last_Name,
+					p.ApplicationUserId,
 					p.BirthDate,
 					p.Weight,
 					p.Height,
@@ -36,7 +36,8 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 			if (result == null)
 				throw new Exception("Patient not found.");
 
-			return (result.Name, result.BirthDate, result.Weight, result.Height, result.Gender);
+			var name = await GetUserFullNameAsync(_context, result.ApplicationUserId);
+			return (name, result.BirthDate, result.Weight, result.Height, result.Gender);
 		}
 
 
@@ -154,19 +155,29 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 			var result = await context.MedicalImages
 				.Where(m => m.MedicalImageId == MedicalImageId)
 				.AsNoTracking()
-				.Select(m => new MedicalImageDetailsReadDto
+				.Select(m => new
 				{
 					PatientNationalId = m.patient.NationalId,
-					PatientName = m.patient.ApplicationUser.First_Name + " " +m.patient.ApplicationUser.Last_Name,
-					Interpretation = m.Interpertation,
-					Date = m.TimeRecorded.ToString("yyyy-MM-dd") ?? "No Data",
-					imageUrl = m.MedicalImageUrl,
+					PatientUserId = m.patient.ApplicationUserId,
+					m.Interpertation,
+					m.TimeRecorded,
+					m.MedicalImageUrl,
 					
-					MedicalImageName = m.MedicalImageName,
+					m.MedicalImageName,
 				})
 				.FirstOrDefaultAsync();
 
-			return result;
+			return result is null
+				? null
+				: new MedicalImageDetailsReadDto
+				{
+					PatientNationalId = result.PatientNationalId.Value,
+					PatientName = await GetUserFullNameAsync(context, result.PatientUserId),
+					Interpretation = result.Interpertation,
+					Date = result.TimeRecorded.ToString("yyyy-MM-dd") ?? "No Data",
+					imageUrl = result.MedicalImageUrl,
+					MedicalImageName = result.MedicalImageName,
+				};
 		}
 
 		//Prescription
@@ -177,10 +188,10 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 			var result = await context.Prescriptions
 				.Where(p => p.PrescriptionId == prescriptionId)
 				.AsNoTracking()
-				.Select(p => new PrescriptionDetailsReadDto
+				.Select(p => new
 				{
 					PatientNationalId = p.Encounter.Patient.NationalId,
-					PatientName = p.Encounter.Patient.ApplicationUser.First_Name + " " + p.Encounter.Patient.ApplicationUser.Last_Name,
+					PatientUserId = p.Encounter.Patient.ApplicationUserId,
 					PrescriptionDate = p.Encounter.EndDate.ToString("yyyy-MM-dd"),
 					DiseaseName = p.Encounter.Conditions.FirstOrDefault() != null 
 						? p.Encounter.Conditions.FirstOrDefault().Disease.Display_Name 
@@ -195,7 +206,16 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 				})
 				.FirstOrDefaultAsync();
 
-			return result;
+			return result is null
+				? null
+				: new PrescriptionDetailsReadDto
+				{
+					PatientNationalId = result.PatientNationalId.Value,
+					PatientName = await GetUserFullNameAsync(context, result.PatientUserId),
+					PrescriptionDate = result.PrescriptionDate,
+					DiseaseName = result.DiseaseName,
+					Medicines = result.Medicines
+				};
 		}
 
 		public async Task<LabTestDetailsReadDto> getLabTestDetails(int labTestId)
@@ -205,13 +225,13 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 			var result = await context.LabTests
 				.Where(l => l.LabTestId == labTestId)
 				.AsNoTracking()
-				.Select(l => new LabTestDetailsReadDto
+				.Select(l => new
 				{
 					PatientNationalId = l.patient.NationalId,
-					PatientName = l.patient.ApplicationUser.First_Name + " " + l.patient.ApplicationUser.Last_Name,
-					LabTestName = l.LabTestName,
-					LabTestDate = l.RecordedTime.ToString("yyyy-MM-dd"),
-					LabTestImageUrl = l.ImageUrl,
+					PatientUserId = l.patient.ApplicationUserId,
+					l.LabTestName,
+					l.RecordedTime,
+					l.ImageUrl,
 					Results = l.LabTestResults.Select(r => new LabTestResultDto
 					{
 						AttributeName = r.LabTestAttribute.Name,
@@ -220,7 +240,17 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 				})
 				.FirstOrDefaultAsync();
 
-			return result;
+			return result is null
+				? null
+				: new LabTestDetailsReadDto
+				{
+					PatientNationalId = result.PatientNationalId.Value,
+					PatientName = await GetUserFullNameAsync(context, result.PatientUserId),
+					LabTestName = result.LabTestName,
+					LabTestDate = result.RecordedTime.ToString("yyyy-MM-dd"),
+					LabTestImageUrl = result.ImageUrl,
+					Results = result.Results
+				};
 		}
 		// Condition Details
 		private async Task<ConditionDetailsReadDto> getConditionDetails(int conditionId)
@@ -258,7 +288,7 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 				{
 					patientId = e.Patient.Patient_Id,
 					PatientNationalId = e.Patient.NationalId,
-					PatientName = e.Patient.ApplicationUser.FullName,
+					PatientUserId = e.Patient.ApplicationUserId,
 					HealthCareProvidersName = e.HealthCareProvider.ApplicationUser.FullName,
 					EncounterDate = e.StartDate,
 					ReasonToVisit = e.Reason_To_Visit,
@@ -290,8 +320,8 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 
 			return new EncounterDetailsDto
 			{
-				PatientNationalId = encounter.PatientNationalId,
-				PatientName = encounter.PatientName,
+				PatientNationalId = encounter.PatientNationalId.Value,
+				PatientName = await GetUserFullNameAsync(context, encounter.PatientUserId),
 				HealthCareProviderName = encounter.HealthCareProvidersName,
 				Date = encounter.EncounterDate.ToString("yyyy-MM-dd"),
 				Reason_To_Visit = encounter.ReasonToVisit,
@@ -300,6 +330,17 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 				Conditions = conditionDetails,
 				Prescription = encounter.Medicines
 			};
+		}
+
+		private static async Task<string> GetUserFullNameAsync(HealthMateContext context, string? applicationUserId)
+		{
+			if (string.IsNullOrWhiteSpace(applicationUserId))
+			{
+				return "No Data";
+			}
+
+			var user = await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == applicationUserId);
+			return user is null ? "No Data" : user.First_Name + " " + user.Last_Name;
 		}
 
 		

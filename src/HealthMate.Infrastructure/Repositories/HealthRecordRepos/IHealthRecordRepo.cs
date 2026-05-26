@@ -1,10 +1,10 @@
+using HealthMate.Domain.Common.Enums;
 using HealthMate.Infrastructure.DTO.ConditionDto;
 using HealthMate.Infrastructure.DTO.EncounterDto;
 using HealthMate.Infrastructure.DTO.LabTestDto;
 using HealthMate.Infrastructure.DTO.MedicalImageDto;
 using HealthMate.Infrastructure.DTO.MedicineDto;
 using HealthMate.Infrastructure.DTO.PrescriptionDto;
-using HealthMate.Infrastructure.Enums;
 
 namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 {

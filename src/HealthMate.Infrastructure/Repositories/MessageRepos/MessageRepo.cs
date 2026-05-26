@@ -124,15 +124,24 @@ namespace HealthMate.Infrastructure.Repositories.MessageRepos
                 // Step 3: Find healthcare provider encounters
                 var encounters = await _context.Encounters
                     .Include(e => e.Patient)
-                        .ThenInclude(p => p.ApplicationUser)
                     .Include(e => e.HealthCareProvider)
                     .Where(e => e.HealthCareProvider.ApplicationUserId == userId)
                     .ToListAsync();
 
                 Console.WriteLine($"Found {encounters.Count} encounters for healthcare provider");
 
+                var patientUserIds = encounters
+                    .Select(e => e.Patient.ApplicationUserId)
+                    .Where(static id => !string.IsNullOrWhiteSpace(id))
+                    .Distinct()
+                    .ToArray();
+                var patientUsers = await _context.Users
+                    .Where(u => patientUserIds.Contains(u.Id))
+                    .ToDictionaryAsync(u => u.Id);
+
                 var result = encounters
-                    .Select(e => (e.Patient.ApplicationUser, e.Patient.NationalId))
+                    .Where(e => e.Patient.ApplicationUserId is not null && patientUsers.ContainsKey(e.Patient.ApplicationUserId))
+                    .Select(e => (patientUsers[e.Patient.ApplicationUserId!], (string?)e.Patient.NationalId.Value))
                     .Distinct()
                     .ToList();
 

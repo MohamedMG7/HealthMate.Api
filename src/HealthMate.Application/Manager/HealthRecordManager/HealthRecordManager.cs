@@ -11,6 +11,7 @@ using HealthMate.Infrastructure.DTO.MedicalImageDto;
 using HealthMate.Infrastructure.DTO.LabTestDto;
 using HealthMate.Application.Manager.UtilityManager;
 using HealthMate.Infrastructure.Enums;
+using HealthMate.Infrastructure.Data.DbHelper;
 
 namespace HealthMate.Application.Manager.HealthRecordManager
 {
@@ -34,7 +35,16 @@ namespace HealthMate.Application.Manager.HealthRecordManager
 		{
 			var encounters = _encounterRepo.GetAll().Where(p => p.PatientId == patientId).ToList();
 			var conditions = _conditionRepo.GetAll().Include(sc => sc.Disease).Where(p => p.PaientId == patientId).ToList();
-			var observations = _observationRepo.GetAll().Include(sc => sc.BodySite).Include(sc => sc.Patient.ApplicationUser).Where(p => p.PatientId == patientId).ToList();
+			var observations = _observationRepo.GetAll().Include(sc => sc.BodySite).Include(sc => sc.Patient).Where(p => p.PatientId == patientId).ToList();
+			var context = (HealthMateContext)_observationRepo.GetContext();
+			var patientUserIds = observations
+				.Select(o => o.Patient.ApplicationUserId)
+				.Where(id => !string.IsNullOrWhiteSpace(id))
+				.Distinct()
+				.ToArray();
+			var patientUsers = context.Users
+				.Where(user => patientUserIds.Contains(user.Id))
+				.ToDictionary(user => user.Id);
 
 			var encounterList = encounters.Select(x => new EncounterReadDto
 			{
@@ -77,7 +87,7 @@ namespace HealthMate.Application.Manager.HealthRecordManager
 				Interpertation = x.Interpertation,
 				ValueQuanitity = x.ValueQuanitity,
 				ValueUnit = x.ValueUnit,
-				PatientName = x.Patient.ApplicationUser.First_Name != null ? x.Patient.ApplicationUser.First_Name : "No Data",
+				PatientName = x.Patient.ApplicationUserId is not null && patientUsers.TryGetValue(x.Patient.ApplicationUserId, out var user) ? user.First_Name : "No Data",
 				BodySiteName = x.BodySite != null ? x.BodySite.DisplayName : "No Data",
 			});
 

@@ -1,3 +1,4 @@
+using HealthMate.Domain.Aggregates.Patient;
 using Microsoft.AspNetCore.Http;
 
 namespace HealthMate.Infrastructure.Data.Models{

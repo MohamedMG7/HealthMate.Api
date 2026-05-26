@@ -5,6 +5,9 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
+using HealthMate.Domain.Aggregates.Patient;
+using HealthMate.Domain.Aggregates.Patient.ValueObjects;
+using HealthMate.Domain.Identity;
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
 using HealthMate.Infrastructure.Enums;
@@ -12,6 +15,7 @@ using HealthMate.Sina.Sessions;
 using HealthMate.Tests.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using DomainGender = HealthMate.Domain.Common.Enums.Gender;
 
 namespace HealthMate.Tests.Sina;
 
@@ -89,19 +93,17 @@ public sealed class SinaControllerTests(WebAppFixture fixture) : IClassFixture<W
         };
 
         context.Users.AddRange(patientUser, providerUser);
-        var patient = new Patient
-        {
-            ApplicationUserId = patientUser.Id,
-            NationalId = "00000000000000",
-            NationalIdImageUrl = "patient_zero_national_id.png",
-            BirthDate = new DateOnly(2000, 1, 1),
-            Gender = Gender.Female,
-            Governorate = "Fake_Governorate",
-            City = "Fake_City",
-            IsVerified = true,
-            Weight = 70,
-            Height = 170
-        };
+        var patient = Patient.Create(
+            NationalId.Create("00000000000000"),
+            new DateOnly(2000, 1, 1),
+            DomainGender.Female,
+            Governorate.Create("Fake_Governorate"),
+            City.Create("Fake_City"),
+            UserId.Create(patientUser.Id),
+            "patient_zero_national_id.png",
+            70,
+            170);
+        patient.Verify(FixedDateTimeProvider.Instance);
         var provider = new HealthCareProvider
         {
             ApplicationUserId = providerUser.Id,

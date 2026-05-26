@@ -1,3 +1,4 @@
+using HealthMate.Domain.Aggregates.Patient;
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +16,7 @@ namespace HealthMate.Infrastructure.Repositories.AdminRepos
 
         public Patient GetPatientWithApplicationUserData(int id)
 		{
-			return _context.Patients.Include(p => p.ApplicationUser).FirstOrDefault(p => p.Patient_Id == id);
+			return _context.Patients.FirstOrDefault(p => p.Patient_Id == id);
 		}
 	}
 }

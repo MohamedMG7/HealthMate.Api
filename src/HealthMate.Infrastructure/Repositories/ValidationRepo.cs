@@ -1,3 +1,4 @@
+using HealthMate.Domain.Aggregates.Patient.ValueObjects;
 using HealthMate.Infrastructure.Data.DbHelper;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,7 +16,8 @@ namespace HealthMate.Infrastructure.Repositories{
         }
 
         public async Task<bool> CheckPatientNationalId(string PatientNationalId){
-            var result = await _context.Patients.AnyAsync(p => p.NationalId == PatientNationalId);
+            var nationalId = NationalId.FromTrusted(PatientNationalId);
+            var result = await _context.Patients.AnyAsync(p => p.NationalId == nationalId);
             return result;
         }
 

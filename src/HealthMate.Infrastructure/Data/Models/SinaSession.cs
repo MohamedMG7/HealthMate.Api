@@ -1,3 +1,4 @@
+using HealthMate.Domain.Aggregates.Patient;
 using HealthMate.Infrastructure.Enums;
 
 namespace HealthMate.Infrastructure.Data.Models;

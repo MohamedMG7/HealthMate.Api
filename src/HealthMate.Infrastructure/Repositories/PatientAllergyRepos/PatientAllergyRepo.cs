@@ -1,5 +1,5 @@
+using HealthMate.Domain.Aggregates.Patient;
 using HealthMate.Infrastructure.Data.DbHelper;
-using HealthMate.Infrastructure.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthMate.Infrastructure.Repositories.PatientAllergyRepos;
@@ -30,7 +30,7 @@ public class PatientAllergyRepo : GenericRepository<PatientAllergy>, IPatientAll
             return;
         }
 
-        allergy.IsActive = false;
+        allergy.Deactivate();
         await context.SaveChangesAsync(ct);
     }
 }

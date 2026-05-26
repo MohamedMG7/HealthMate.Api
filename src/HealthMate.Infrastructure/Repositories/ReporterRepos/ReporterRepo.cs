@@ -63,7 +63,7 @@ namespace HealthMate.Infrastructure.Repositories{
                 .ToDictionary(g => g.Key, g => g.Count());
 
             report.LocationDistribution = distinctPatients
-                .GroupBy(p => $"{p.Governorate} - {p.City}")
+                .GroupBy(p => $"{p.Governorate.Value} - {p.City.Value}")
                 .ToDictionary(g => g.Key, g => g.Count());
 
             // 2. Encounter Analytics

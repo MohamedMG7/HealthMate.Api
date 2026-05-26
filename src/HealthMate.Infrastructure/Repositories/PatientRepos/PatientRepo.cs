@@ -1,11 +1,13 @@
+using HealthMate.Domain.Aggregates.Patient;
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
 using HealthMate.Infrastructure.DTO.EncounterDto;
 using HealthMate.Infrastructure.DTO.PatientDto.HumanPatientDtos;
-using HealthMate.Infrastructure.Enums;
 using Microsoft.EntityFrameworkCore;
+using DomainGender = HealthMate.Domain.Common.Enums.Gender;
 
 namespace HealthMate.Infrastructure.Repositories.PatientRepos{
+    [Obsolete("Use IPatientRepository; will be removed after the Patient aggregate migration completes.")]
     public class PatientRepo : GenericRepository<Patient>, IPatientRepo{
 
         private readonly HealthMateContext _context;
@@ -21,9 +23,19 @@ namespace HealthMate.Infrastructure.Repositories.PatientRepos{
           try
             {
                 await using var context = await _contextFactory.CreateDbContextAsync();
-                var patientImageUrl = await context.Patients
+                var applicationUserId = await context.Patients
                     .Where(s => s.Patient_Id == patientId)
-                    .Select(p => p.ApplicationUser.ImageUrl)
+                    .Select(p => p.ApplicationUserId)
+                    .FirstOrDefaultAsync();
+
+                if (applicationUserId == null)
+                {
+                    throw new ArgumentNullException("Patient Image Url Not Found");
+                }
+
+                var patientImageUrl = await context.Users
+                    .Where(user => user.Id == applicationUserId)
+                    .Select(user => user.ImageUrl)
                     .FirstOrDefaultAsync();
 
                 if (patientImageUrl == null)
@@ -85,7 +97,7 @@ namespace HealthMate.Infrastructure.Repositories.PatientRepos{
                 throw new Exception($"Patient with ID {patientId} not found or gender not available");
             }
 
-            var genderEnum = (Gender)genderValue.Value;
+            var genderEnum = (DomainGender)genderValue.Value;
             return genderEnum.ToString();
         }
 

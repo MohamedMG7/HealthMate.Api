@@ -1,3 +1,4 @@
+using HealthMate.Api.Middleware;
 using HealthMate.Application.Modules;
 using HealthMate.Infrastructure.Data.DbHelper;
 using Microsoft.EntityFrameworkCore;
@@ -53,6 +54,7 @@ namespace HealthMate.Api
             }
 
             app.UseCors("HealthmateWebsite");
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
             app.UseAuthentication();
             app.UseAuthorization();
 

@@ -15,6 +15,9 @@ Use `.github/pull_request_template.md`. Explain what changed, why it changed, an
 ## Code Style
 C# uses `dotnet format`. Frontend changes belong in the separate `HealthMate.WebApp` repository.
 
+## Architecture
+New aggregate code belongs in `src/HealthMate.Domain` with private setters, factory methods, and value objects for invariants. Use `ICommand<TResult>`/`IQuery<TResult>` plus one handler per use case in `src/HealthMate.Application`; keep EF Core and external adapters in `src/HealthMate.Infrastructure`.
+
 ## Tests And Migrations
 Run `dotnet test HealthMate.sln`. Add migrations with `dotnet ef migrations add <Name> --project src/HealthMate.Infrastructure --startup-project src/HealthMate.Api`.
 

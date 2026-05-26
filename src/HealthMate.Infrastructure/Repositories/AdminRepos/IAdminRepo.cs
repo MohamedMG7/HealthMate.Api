@@ -1,3 +1,4 @@
+using HealthMate.Domain.Aggregates.Patient;
 using HealthMate.Infrastructure.Data.Models;
 
 namespace HealthMate.Infrastructure.Repositories.AdminRepos

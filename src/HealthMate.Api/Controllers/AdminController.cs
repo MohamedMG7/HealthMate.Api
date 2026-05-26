@@ -1,7 +1,8 @@
-using HealthMate.Infrastructure.DTO.AdminDto;
-using HealthMate.Application.Manager.AdminManager;
+using HealthMate.Application.Common;
+using HealthMate.Application.Identity.Contracts;
+using HealthMate.Application.Patients.Commands;
+using HealthMate.Application.Patients.Queries;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HealthMate.Api.Controllers
@@ -12,48 +13,35 @@ namespace HealthMate.Api.Controllers
 	[ApiController]
 	public class AdminController : ControllerBase
 	{
-		private readonly IAdminManager _AdminManager;
-		public AdminController(IAdminManager AdminManager)
+		private readonly IHandlerDispatcher _dispatcher;
+
+		public AdminController(IHandlerDispatcher dispatcher)
 		{
-			_AdminManager = AdminManager;
+			_dispatcher = dispatcher;
 		}
 
 		[HttpGet]
-		public IActionResult GetAllPatientsToBeVerified()
+		public async Task<IActionResult> GetAllPatientsToBeVerified(CancellationToken ct)
 		{
-			var Patients = _AdminManager.GetPatients();
+			var patients = await _dispatcher.DispatchAsync(new ListPatientsToVerifyQuery(), ct);
 
-			if (Patients == null || !Patients.Any())
+			if (!patients.Any())
 			{
 				return NotFound("No Patients Found");
 			}
 
-			return Ok(Patients);
+			return Ok(patients);
 		}
 
 		[HttpPost("approve-reject")]
-		public IActionResult ApproveOrRejectPatient([FromBody] AdminApprovalDto approvalDto)
+		public async Task<IActionResult> ApproveOrRejectPatient([FromBody] AdminApprovalDto approvalDto, CancellationToken ct)
 		{
-			try
-			{
-				_AdminManager.ApproveOrRejectPatient(approvalDto);
-				return Ok("Operation Succeded.");
-			}
-			catch (KeyNotFoundException ex)
-			{
-				return NotFound(new { Message = ex.Message });
-			}
-			catch (ArgumentException ex)
-			{
-				return BadRequest(new { Message = ex.Message });
-			}
-			catch (InvalidOperationException ex) {
-				return BadRequest(new { Message = ex.Message });
-			}
-			catch (Exception ex)
-			{
-				return StatusCode(500, new { Message = "An unexpected error occurred.", Details = ex.Message });
-			}
+			await _dispatcher.DispatchAsync(new VerifyPatientCommand(
+				approvalDto.PatientId,
+				approvalDto.IsApproved,
+				approvalDto.RejectionReason), ct);
+
+			return Ok("Operation Succeded.");
 		}
 
 		
