@@ -1,8 +1,9 @@
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
+using HealthMate.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 
-namespace HealthMate.Infrastructure.Repositories.ApplicationUserRepos
+namespace HealthMate.Infrastructure.Identity.Repositories
 {
 	public class ApplicationUserRepo : GenericRepository<ApplicationUser>,IApplicationUserRepo
 	{

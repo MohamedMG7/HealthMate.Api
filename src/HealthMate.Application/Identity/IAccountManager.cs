@@ -2,7 +2,7 @@ using HealthMate.Infrastructure.DTO.AccountDto;
 using HealthMate.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Identity;
 
-namespace HealthMate.Application.Manager.AccountManager
+namespace HealthMate.Application.Identity
 {
 	public interface IAccountManager
 	{

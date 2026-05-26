@@ -1,6 +1,7 @@
 using HealthMate.Infrastructure.Data.Models;
+using HealthMate.Infrastructure.Repositories;
 
-namespace HealthMate.Infrastructure.Repositories.ApplicationUserRepos
+namespace HealthMate.Infrastructure.Identity.Repositories
 {
 	public interface IApplicationUserRepo : IGenericRepository<ApplicationUser>
 	{
