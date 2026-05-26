@@ -3,6 +3,7 @@ WORKDIR /src
 
 COPY HealthMate.sln ./
 COPY src/HealthMate.Api/HealthMate.Api.csproj src/HealthMate.Api/
+COPY src/HealthMate.Application.Abstractions/HealthMate.Application.Abstractions.csproj src/HealthMate.Application.Abstractions/
 COPY src/HealthMate.Application/HealthMate.Application.csproj src/HealthMate.Application/
 COPY src/HealthMate.Domain/HealthMate.Domain.csproj src/HealthMate.Domain/
 COPY src/HealthMate.Infrastructure/HealthMate.Infrastructure.csproj src/HealthMate.Infrastructure/

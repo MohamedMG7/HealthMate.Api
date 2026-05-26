@@ -20,6 +20,7 @@
 /// </remarks>
 
 
+using HealthMate.Application.Abstractions.Identity.Ports;
 using HealthMate.Domain.Aggregates.Patient;
 using HealthMate.Infrastructure.DTO.AccountDto;
 using HealthMate.Infrastructure.Data.Models;

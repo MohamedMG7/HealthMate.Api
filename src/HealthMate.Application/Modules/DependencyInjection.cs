@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text;
 using FluentValidation;
+using HealthMate.Application.Abstractions.Identity.Ports;
 using HealthMate.Application.Common;
 using HealthMate.Application.Common.Behaviors;
 using HealthMate.Application.Common.Time;
@@ -34,6 +35,7 @@ using HealthMate.Fhir.Serialization;
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
 using HealthMate.Infrastructure.Fhir;
+using HealthMate.Infrastructure.Identity.Services;
 using HealthMate.Infrastructure.Repositories;
 using HealthMate.Infrastructure.Repositories.AdminRepos;
 using HealthMate.Infrastructure.Repositories.ApplicationUserRepos;
