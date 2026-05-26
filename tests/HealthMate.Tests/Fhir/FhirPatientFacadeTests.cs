@@ -134,7 +134,7 @@ public sealed class FhirPatientFacadeTests(WebAppFixture fixture) : IClassFixtur
         var context = scope.ServiceProvider.GetRequiredService<HealthMateContext>();
         var persisted = context.Patients.AsNoTracking().Single(p => p.Patient_Fhir_Id == fhirId);
         persisted.IsVerified.Should().BeTrue("FHIR PUT must not flip the admin-managed verification flag");
-        persisted.City.Should().Be("Fake_City_Verified_PUT");
+        persisted.City.Value.Should().Be("Fake_City_Verified_PUT");
     }
 
     [Fact]
