@@ -8,11 +8,9 @@
 
   <ItemGroup>
     <PackageReference Include="FluentValidation" Version="11.11.0" />
-    <PackageReference Include="MailKit" Version="4.16.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.8" />
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="9.10.0" />
-    <PackageReference Include="MimeKit" Version="4.16.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.18.0" />
   </ItemGroup>
 
@@ -21,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\HealthMate.Application.Abstractions\HealthMate.Application.Abstractions.csproj" />
     <ProjectReference Include="..\HealthMate.Domain\HealthMate.Domain.csproj" />
     <ProjectReference Include="..\HealthMate.Fhir\HealthMate.Fhir.csproj" />
     <ProjectReference Include="..\HealthMate.Infrastructure\HealthMate.Infrastructure.csproj" />
