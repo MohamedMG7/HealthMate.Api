@@ -1,5 +1,5 @@
 using HealthMate.Infrastructure.DTO.UserDto;
-using HealthMate.Infrastructure.Repositories.ApplicationUserRepos;
+using HealthMate.Infrastructure.Identity.Repositories;
 
 namespace HealthMate.Application.Manager.UsersManager
 {

@@ -1,10 +1,10 @@
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
 using HealthMate.Infrastructure.Enums;
-using HealthMate.Infrastructure.Repositories.VerificationCodeRepo;
+using HealthMate.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 
-namespace HealthMate.Infrastructure.Repositories.VerificationCodeRepos
+namespace HealthMate.Infrastructure.Identity.Repositories
 {
 	public class VerificationCodeRepo : GenericRepository<VerificationCode>,IVerificationCodeRepo
 	{

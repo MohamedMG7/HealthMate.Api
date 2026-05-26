@@ -25,8 +25,7 @@ using HealthMate.Domain.Aggregates.Patient;
 using HealthMate.Infrastructure.DTO.AccountDto;
 using HealthMate.Infrastructure.Data.Models;
 using HealthMate.Infrastructure.Repositories;
-using HealthMate.Infrastructure.Repositories.ApplicationUserRepos;
-using HealthMate.Infrastructure.Repositories.VerificationCodeRepo;
+using HealthMate.Infrastructure.Identity.Repositories;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -37,7 +36,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Diagnostics.Eventing.Reader;
 
-namespace HealthMate.Application.Manager.AccountManager
+namespace HealthMate.Application.Identity
 {
 	public class AccountManager : IAccountManager
 	{

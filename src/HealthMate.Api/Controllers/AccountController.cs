@@ -1,5 +1,5 @@
 using HealthMate.Infrastructure.DTO.AccountDto;
-using HealthMate.Application.Manager.AccountManager;
+using HealthMate.Application.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

@@ -1,7 +1,8 @@
 using HealthMate.Infrastructure.Data.Models;
 using HealthMate.Infrastructure.Enums;
+using HealthMate.Infrastructure.Repositories;
 
-namespace HealthMate.Infrastructure.Repositories.VerificationCodeRepo
+namespace HealthMate.Infrastructure.Identity.Repositories
 {
 	public interface IVerificationCodeRepo : IGenericRepository<VerificationCode>
 	{
