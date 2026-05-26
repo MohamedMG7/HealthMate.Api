@@ -25,7 +25,6 @@ using HealthMate.Domain.Aggregates.Patient;
 using HealthMate.Infrastructure.DTO.AccountDto;
 using HealthMate.Infrastructure.Data.Models;
 using HealthMate.Infrastructure.Repositories;
-using HealthMate.Infrastructure.Identity.Repositories;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -40,24 +39,21 @@ namespace HealthMate.Application.Identity
 {
 	public class AccountManager : IAccountManager
 	{
-		//private readonly IGenericRepository<ApplicationUser> _AccountRepo;
-		private readonly IApplicationUserRepo _AccountRepo;
 		private readonly IGenericRepository<HealthCareProvider> _HealthCareProviderRepo;
 		private readonly IGenericRepository<Admin> _AdminRepo;
 		private readonly IGenericRepository<Patient> _PatientRepo;
-		private readonly IVerificationCodeRepo _verificationRepo;
+		private readonly IVerificationCodeStore _verificationCodes;
 		private readonly UserManager<ApplicationUser> _UserManager;	
 		private readonly RoleManager<IdentityRole> _RoleManager;
 		private readonly IConfiguration _Configuration;
 		private readonly IEmailService _EmailService;
 		private readonly IFileService _FileService;
-        public AccountManager(IApplicationUserRepo AccountRepo, UserManager<ApplicationUser> UserManager, IConfiguration Configuration, RoleManager<IdentityRole> RoleManager,IVerificationCodeRepo verificationRepo, IEmailService emailService, IGenericRepository<Patient> patientRepo, IGenericRepository<Admin> AdminRepo, IGenericRepository<HealthCareProvider> HealthCareProviderRepo, IFileService FileService)
+        public AccountManager(UserManager<ApplicationUser> UserManager, IConfiguration Configuration, RoleManager<IdentityRole> RoleManager, IVerificationCodeStore verificationCodes, IEmailService emailService, IGenericRepository<Patient> patientRepo, IGenericRepository<Admin> AdminRepo, IGenericRepository<HealthCareProvider> HealthCareProviderRepo, IFileService FileService)
         {
-			_AccountRepo = AccountRepo;
 			_UserManager = UserManager;
 			_Configuration = Configuration;
 			_RoleManager = RoleManager;	
-			_verificationRepo = verificationRepo;
+			_verificationCodes = verificationCodes;
 			_EmailService = emailService;
 			_PatientRepo = patientRepo;
 			_AdminRepo = AdminRepo;
@@ -221,19 +217,13 @@ namespace HealthMate.Application.Identity
 					// Generate Verification Code
 					string confirmationCode = GenerateVerificationCode();
 					// Add Verification code to DB
-					var Vcode = new VerificationCode
-					{
-						ApplicationUser_Id = user.Id,
-						VerificationCodeDigits = confirmationCode,
-						ExpirationDate = DateTime.UtcNow.AddMinutes(10)
-					};
-					_verificationRepo.Add(Vcode);
+					_verificationCodes.AddCode(user.Id, confirmationCode, DateTime.UtcNow.AddMinutes(10), VerificationCodePurpose.EmailConfirmation);
 
 					//compose email body and send it
 					string confirmationEmailBody = $"Dear {user.First_Name} \n\n  here is your verification code: {confirmationCode} \n it expires in 10 minutes";
 					var res = await _EmailService.SendEmailAsync(user.Email, "Confirm Your Email Address", confirmationEmailBody);
 
-					_verificationRepo.Save();
+					_verificationCodes.Save();
 					return new RegistrationResult
 					{
 						Result = IdentityResult.Success,
@@ -293,7 +283,7 @@ namespace HealthMate.Application.Identity
 			}
 
 			// Check if the verification code matches
-			bool verificationEntry = _verificationRepo.GetByUserIdAndCode(user.Id, emailConfirmationDto.VerificationCode,VerificationPurpose.EmailConfirmation); // Use user.Id instead of email
+			bool verificationEntry = _verificationCodes.IsValid(user.Id, emailConfirmationDto.VerificationCode, VerificationCodePurpose.EmailConfirmation);
 			if (!verificationEntry)
 			{
 				return "Invalid verification code.";
@@ -306,9 +296,8 @@ namespace HealthMate.Application.Identity
 			var updateResult = await _UserManager.UpdateAsync(user);
 			if (updateResult.Succeeded)
 			{
-				var verificationCode = _verificationRepo.GetAll().FirstOrDefault(vc => vc.ApplicationUser_Id == user.Id && vc.VerificationCodeDigits == emailConfirmationDto.VerificationCode);
-				_verificationRepo.Delete(verificationCode!);
-				_verificationRepo.Save();
+				_verificationCodes.Delete(user.Id, emailConfirmationDto.VerificationCode);
+				_verificationCodes.Save();
 				return "Email Confirmed";
 			}
 
@@ -345,21 +334,13 @@ namespace HealthMate.Application.Identity
 			var random = new Random();
 			var verificationCode = random.Next(1000, 9999).ToString();
 
-			if (!_verificationRepo.CleanUserAndUnusedExpiredCodes(user.Id))
+			if (!_verificationCodes.DeleteAllForUser(user.Id))
 			{
 				return "something is wrong";
 			}
 
-			var verificationEntry = new VerificationCode
-			{
-				ApplicationUser_Id = user.Id,
-				VerificationCodeDigits = verificationCode,
-				ExpirationDate = DateTime.UtcNow.AddMinutes(10),
-				Purpose = VerificationPurpose.ForgotPassword
-			};
-
-			_verificationRepo.Add(verificationEntry);
-			_verificationRepo.Save();
+			_verificationCodes.AddCode(user.Id, verificationCode, DateTime.UtcNow.AddMinutes(10), VerificationCodePurpose.ForgotPassword);
+			_verificationCodes.Save();
 
 			var emailSubject = "Password Reset Verification Code";
 			var emailMessage = $"Your verification code is: {verificationCode}";
@@ -396,7 +377,7 @@ namespace HealthMate.Application.Identity
 				return false;
 			}
 
-			bool IsVerified = _verificationRepo.GetByUserIdAndCode(user.Id,Data.Code,VerificationPurpose.ForgotPassword);
+			bool IsVerified = _verificationCodes.IsValid(user.Id, Data.Code, VerificationCodePurpose.ForgotPassword);
 
 			if(!IsVerified){
 				return false;
