@@ -158,6 +158,7 @@ public static class DependencyInjection
         services.AddScoped<IVerificationCodeRepo, VerificationCodeRepo>();
         services.AddScoped<IVerificationCodeStore, VerificationCodeStore>();
         services.AddScoped<IApplicationUserRepo, ApplicationUserRepo>();
+        services.AddScoped<IIdentityUserDirectory, IdentityUserDirectory>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IUserManager, UserManager>();
         services.AddScoped<IAccountManager, AccountManager>();
