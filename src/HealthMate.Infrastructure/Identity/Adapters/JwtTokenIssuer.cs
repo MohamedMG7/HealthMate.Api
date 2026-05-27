@@ -18,7 +18,7 @@ public sealed class JwtTokenIssuer(IConfiguration configuration) : IJwtTokenIssu
         }
 
         var signingCredential = new SigningCredentials(
-            new SymmetricSecurityKey(Encoding.ASCII.GetBytes(secret)),
+            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)),
             SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
