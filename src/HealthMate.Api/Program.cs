@@ -1,6 +1,9 @@
 using HealthMate.Api.Middleware;
-using HealthMate.Application.Modules;
+using HealthMate.Application;
+using HealthMate.Fhir;
+using HealthMate.Infrastructure;
 using HealthMate.Infrastructure.Data.DbHelper;
+using HealthMate.Sina;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthMate.Api
@@ -16,20 +19,10 @@ namespace HealthMate.Api
             builder.Services.AddSwaggerGen();
 
             builder.Services
-                .AddSharedInfrastructure(builder.Configuration)
-                .AddIdentityModule(builder.Configuration)
-                .AddPatientsModule()
-                .AddClinicalModule()
-                .AddLabTestsModule()
-                .AddPrescriptionsModule()
-                .AddDocumentsModule()
-                .AddMessagingModule()
-                .AddMentalHealthModule()
-                .AddProvidersModule()
-                .AddAdminModule()
-                .AddSinaModule(builder.Configuration)
-                .AddFhirModule(builder.Configuration)
-                .AddMlModule(builder.Configuration);
+                .AddApplication(builder.Configuration)
+                .AddInfrastructure(builder.Configuration)
+                .AddSina(builder.Configuration)
+                .AddFhir(builder.Configuration);
 
             var app = builder.Build();
 

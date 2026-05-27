@@ -41,7 +41,7 @@ public sealed class VerifyPatientCommandHandler(
                 await emailService.SendEmailAsync(account.Email, "Email Verified", "Your record is verified and ready to use.");
             }
 
-            logger.LogInformation("Verified patient aggregate {PatientId}", patient.Patient_Id);
+            logger.LogInformation("Verified patient aggregate {PatientId}", patient.Id);
             return Unit.Value;
         }
 
@@ -50,7 +50,7 @@ public sealed class VerifyPatientCommandHandler(
             await emailService.SendEmailAsync(account.Email, "Email Verification Needs Your Attention", request.Reason!);
         }
 
-        logger.LogInformation("Rejected patient verification {PatientId}", patient.Patient_Id);
+        logger.LogInformation("Rejected patient verification {PatientId}", patient.Id);
         return Unit.Value;
     }
 }

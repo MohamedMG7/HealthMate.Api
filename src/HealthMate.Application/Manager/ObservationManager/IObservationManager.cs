@@ -1,6 +1,6 @@
-using HealthMate.Infrastructure.DTO.EncounterDto;
-using HealthMate.Infrastructure.DTO.ObservationDto;
-using HealthMate.Infrastructure.DTO.PatientDto.HumanPatientDtos;
+using HealthMate.Application.Encounters.Contracts;
+using HealthMate.Application.Observations.Contracts;
+using HealthMate.Application.Patients.Contracts;
 
 namespace HealthMate.Application.Manager.ObservationManager
 {

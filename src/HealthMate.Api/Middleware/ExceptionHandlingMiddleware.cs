@@ -2,6 +2,8 @@ using System.Net.Mime;
 using HealthMate.Application.Common.Exceptions;
 using HealthMate.Domain.Aggregates.Patient;
 using HealthMate.Domain.Common;
+using HealthMate.Fhir.Ports;
+using Microsoft.AspNetCore.Mvc;
 
 namespace HealthMate.Api.Middleware;
 
@@ -49,10 +51,24 @@ public sealed class ExceptionHandlingMiddleware(
         }
 
         context.Response.StatusCode = statusCode;
-        context.Response.ContentType = MediaTypeNames.Application.Json;
+        context.Response.ContentType = MediaTypeNames.Application.ProblemJson;
 
-        var error = new ApiError(code, title, detail, traceId, errors);
-        await context.Response.WriteAsJsonAsync(error);
+        var problem = new ProblemDetails
+        {
+            Status = statusCode,
+            Title = title,
+            Detail = detail,
+            Type = $"https://httpstatuses.com/{statusCode}",
+            Instance = context.Request.Path
+        };
+        problem.Extensions["code"] = code;
+        problem.Extensions["correlationId"] = traceId;
+        if (errors.Count > 0)
+        {
+            problem.Extensions["errors"] = errors;
+        }
+
+        await context.Response.WriteAsJsonAsync(problem);
     }
 
     private (int StatusCode, string Code, string Title, string? Detail, IReadOnlyList<ApiErrorItem> Errors) MapException(Exception exception, string traceId)
@@ -65,6 +81,20 @@ public sealed class ExceptionHandlingMiddleware(
                 "The request could not be processed.",
                 validation.Message,
                 validation.Errors.Select(static error => new ApiErrorItem(error.Field, error.Message)).ToArray()),
+
+            FhirNotFoundException => (
+                StatusCodes.Status404NotFound,
+                "fhir_not_found",
+                "The FHIR resource could not be found.",
+                exception.Message,
+                []),
+
+            FhirConcurrencyException => (
+                StatusCodes.Status409Conflict,
+                "fhir_concurrency_conflict",
+                "The FHIR resource version did not match.",
+                exception.Message,
+                []),
 
             DomainException domain => MapDomainException(domain),
 
@@ -86,7 +116,7 @@ public sealed class ExceptionHandlingMiddleware(
                 StatusCodes.Status500InternalServerError,
                 "internal_error",
                 "An unexpected error occurred.",
-                environment.IsDevelopment() ? exception.Message : $"Reference trace id: {traceId}.",
+                $"Reference trace id: {traceId}.",
                 [])
         };
     }
@@ -98,6 +128,17 @@ public sealed class ExceptionHandlingMiddleware(
             return (mapping.StatusCode, mapping.Code, mapping.Title, exception.Message, []);
         }
 
-        return (StatusCodes.Status400BadRequest, "domain_rule_failed", "A domain rule was violated.", exception.Message, []);
+        var typeName = exception.GetType().Name;
+        if (typeName.EndsWith("NotFoundException", StringComparison.Ordinal))
+        {
+            return (StatusCodes.Status404NotFound, "resource_not_found", "The resource could not be found.", exception.Message, []);
+        }
+
+        if (typeName.EndsWith("AlreadyExistsException", StringComparison.Ordinal))
+        {
+            return (StatusCodes.Status409Conflict, "resource_conflict", "The resource conflicts with existing data.", exception.Message, []);
+        }
+
+        return (StatusCodes.Status422UnprocessableEntity, "domain_rule_failed", "A domain rule was violated.", exception.Message, []);
     }
 }

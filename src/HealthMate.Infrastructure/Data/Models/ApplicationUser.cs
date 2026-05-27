@@ -1,4 +1,4 @@
-using HealthMate.Infrastructure.Enums;
+using HealthMate.Application.Abstractions.Enums;
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 

@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using HealthMate.Infrastructure.DTO.LabTestDto;
+using HealthMate.Application.LabTests.Contracts;
 using HealthMate.Application.Manager.LabTestManager;
 using HealthMate.Application.Manager.MedicalRecordManager;
 using Microsoft.AspNetCore.Mvc;

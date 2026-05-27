@@ -1,6 +1,4 @@
-using HealthMate.Infrastructure.DTO.AccountDto;
-using HealthMate.Infrastructure.Data.Models;
-using Microsoft.AspNetCore.Identity;
+using HealthMate.Application.Identity.Contracts;
 
 namespace HealthMate.Application.Identity
 {

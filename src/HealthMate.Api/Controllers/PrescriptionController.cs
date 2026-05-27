@@ -1,6 +1,6 @@
 using HealthMate.Application.Manager.MedicalRecordManager;
+using HealthMate.Application.Prescriptions.Contracts;
 using Microsoft.AspNetCore.Mvc;
-using HealthMate.Infrastructure.DTO;
 using Microsoft.AspNetCore.Authorization;
 
 namespace HealthMate.Api.Controllers

@@ -1,4 +1,4 @@
-namespace HealthMate.Infrastructure.Repositories
+namespace HealthMate.Application.Abstractions.Validation
 {
     public interface IValidationRepo
     {

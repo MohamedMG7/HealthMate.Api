@@ -1,6 +1,4 @@
-
-using HealthMate.Infrastructure.DTO.UserDto;
-using HealthMate.Infrastructure.Data.Models;
+using HealthMate.Application.Identity.Contracts.Users;
 
 namespace HealthMate.Application.Manager.UsersManager
 {

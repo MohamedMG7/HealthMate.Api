@@ -1,4 +1,4 @@
-using HealthMate.Infrastructure.DTO.BodySiteDto;
+using HealthMate.Application.Clinical.Contracts;
 using System;
 using System.Collections.Generic;
 using System.Linq;

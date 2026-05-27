@@ -1,5 +1,5 @@
-using HealthMate.Infrastructure.DTO.ObservationDto;
-using HealthMate.Infrastructure.DTO.PatientDto.HumanPatientDtos;
+using HealthMate.Application.Observations.Contracts;
+using HealthMate.Application.Patients.Contracts;
 
 namespace HealthMate.Application.Patients.Contracts;
 

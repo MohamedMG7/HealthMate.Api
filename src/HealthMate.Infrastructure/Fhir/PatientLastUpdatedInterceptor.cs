@@ -37,7 +37,7 @@ public sealed class PatientLastUpdatedInterceptor(TimeProvider clock) : SaveChan
                 continue;
             }
 
-            if (string.IsNullOrWhiteSpace(entry.Entity.Patient_Fhir_Id))
+            if (string.IsNullOrWhiteSpace(entry.Entity.FhirId))
             {
                 entry.Entity.AssignFhirId(Guid.NewGuid().ToString());
             }

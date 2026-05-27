@@ -34,7 +34,7 @@ public sealed class PatientAllergy : Entity<int>
         return new PatientAllergy
         {
             Patient = patient,
-            PatientId = patient.Patient_Id,
+            PatientId = patient.Id,
             Substance = substance.Trim(),
             Severity = severity,
             Reaction = string.IsNullOrWhiteSpace(reaction) ? null : reaction.Trim(),

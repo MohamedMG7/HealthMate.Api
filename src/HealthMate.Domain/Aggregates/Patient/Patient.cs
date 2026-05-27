@@ -14,14 +14,7 @@ public sealed class Patient : AggregateRoot<int>
     {
     }
 
-    public override int Id
-    {
-        get => Patient_Id;
-        protected set => Patient_Id = value;
-    }
-
-    public int Patient_Id { get; private set; }
-    public string Patient_Fhir_Id { get; private set; } = null!;
+    public string FhirId { get; private set; } = null!;
     public NationalId NationalId { get; private set; } = null!;
     public string NationalIdImageUrl { get; private set; } = string.Empty;
     public DateOnly BirthDate { get; private set; }
@@ -76,7 +69,7 @@ public sealed class Patient : AggregateRoot<int>
             throw new DomainException("FHIR patient id is required.");
         }
 
-        Patient_Fhir_Id = fhirId.Trim();
+        FhirId = fhirId.Trim();
     }
 
     public void ApplyPersistenceVersion(DateTimeOffset lastUpdated, uint rowVersion)

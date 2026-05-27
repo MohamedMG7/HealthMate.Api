@@ -1,3 +1,4 @@
+using HealthMate.Application.Abstractions.Validation;
 using HealthMate.Domain.Aggregates.Patient.ValueObjects;
 using HealthMate.Infrastructure.Data.DbHelper;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,7 @@ namespace HealthMate.Infrastructure.Repositories{
         }
 
         public async Task<bool> CheckPatientId(int PatientId){
-            var result = await _context.Patients.AnyAsync(p => p.Patient_Id == PatientId);
+            var result = await _context.Patients.AnyAsync(p => p.Id == PatientId);
             return result;
         }
 

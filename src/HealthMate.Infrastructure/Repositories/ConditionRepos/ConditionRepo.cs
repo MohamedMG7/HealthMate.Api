@@ -1,6 +1,6 @@
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
-using HealthMate.Infrastructure.DTO.ConditionDto;
+using HealthMate.Application.Conditions.Contracts;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthMate.Infrastructure.Repositories.ConditionRepos{

@@ -1,6 +1,6 @@
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
-using HealthMate.Infrastructure.Enums;
+using HealthMate.Application.Abstractions.Enums;
 using HealthMate.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 

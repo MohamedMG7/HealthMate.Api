@@ -1,6 +1,6 @@
 using System.Security.Claims;
 using HealthMate.Application.Manager.MessageManager;
-using HealthMate.Infrastructure.DTO.MessageDto;
+using HealthMate.Application.Messaging.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

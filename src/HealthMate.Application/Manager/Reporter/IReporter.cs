@@ -1,4 +1,4 @@
-using HealthMate.Infrastructure.DTO;
+using HealthMate.Application.Admin.Contracts;
 
 namespace HealthMate.Application.Manager{
     public interface IReporter{

@@ -1,5 +1,5 @@
 using HealthMate.Application.Manager.DiseaseManager;
-using HealthMate.Infrastructure.DTO.DiseaseDto;
+using HealthMate.Application.Clinical.Contracts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HealthMate.Api.Controllers{

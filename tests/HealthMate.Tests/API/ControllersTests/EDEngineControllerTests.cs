@@ -1,9 +1,9 @@
 using System.Security.Claims;
 using FluentAssertions;
 using HealthMate.Api.Controllers;
+using HealthMate.Application.Abstractions.Validation;
 using HealthMate.Application.Manager.MachineLearningManager;
-using HealthMate.Infrastructure.DTO.MachineLearningDto;
-using HealthMate.Infrastructure.Repositories;
+using HealthMate.Application.Ml.Contracts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;

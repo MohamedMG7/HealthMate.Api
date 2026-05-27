@@ -1,4 +1,4 @@
-using HealthMate.Infrastructure.DTO.ConditionDto;
+using HealthMate.Application.Conditions.Contracts;
 
 namespace HealthMate.Application.Manager.ConditionManager
 {

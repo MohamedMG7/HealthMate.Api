@@ -1,6 +1,6 @@
 using System.Globalization;
 using HealthMate.Infrastructure.Data.DbHelper;
-using HealthMate.Infrastructure.DTO;
+using HealthMate.Application.Admin.Contracts;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthMate.Infrastructure.Repositories{
@@ -24,13 +24,13 @@ namespace HealthMate.Infrastructure.Repositories{
             var report = new TrafficReportDto();
 
             // 1. Patient Overview
-            var distinctPatients = encounters.Select(e => e.Patient).DistinctBy(p => p.Patient_Id).ToList();
+            var distinctPatients = encounters.Select(e => e.Patient).DistinctBy(p => p.Id).ToList();
             report.TotalPatients = distinctPatients.Count;
 
             report.NewPatientsPerYear = distinctPatients
                 .GroupBy(p =>
                     context.Encounters
-                        .Where(e => e.PatientId == p.Patient_Id)
+                        .Where(e => e.PatientId == p.Id)
                         .OrderBy(e => e.StartDate)
                         .Select(e => e.StartDate.Year)
                         .FirstOrDefault())

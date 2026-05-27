@@ -1,5 +1,4 @@
-using HealthMate.Infrastructure.Data.Models;
-using HealthMate.Infrastructure.DTO.MessageDto;
+using HealthMate.Application.Messaging.Contracts;
 
 namespace HealthMate.Application.Manager.MessageManager{
     public interface IMessageManager{

@@ -46,7 +46,7 @@ public sealed class PatientHistoryWriter(TimeProvider clock) : SaveChangesInterc
         foreach (var entry in entries)
         {
             var patient = entry.Entity;
-            if (!string.IsNullOrWhiteSpace(patient.Patient_Fhir_Id) && alreadyCaptured.Contains(patient.Patient_Fhir_Id))
+            if (!string.IsNullOrWhiteSpace(patient.FhirId) && alreadyCaptured.Contains(patient.FhirId))
             {
                 continue;
             }
@@ -58,8 +58,8 @@ public sealed class PatientHistoryWriter(TimeProvider clock) : SaveChangesInterc
 
             healthMateContext.PatientHistories.Add(new PatientHistory
             {
-                Patient_Id = patient.Patient_Id,
-                Patient_Fhir_Id = patient.Patient_Fhir_Id,
+                Patient_Id = patient.Id,
+                Patient_Fhir_Id = patient.FhirId,
                 NationalId = patient.NationalId.Value,
                 NationalIdImageUrl = patient.NationalIdImageUrl,
                 BirthDate = patient.BirthDate,

@@ -1,4 +1,4 @@
-using HealthMate.Infrastructure.DTO.DiseaseDto;
+using HealthMate.Application.Clinical.Contracts;
 
 namespace HealthMate.Application.Manager.DiseaseManager{
     public interface IDiseaseManager{

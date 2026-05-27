@@ -1,10 +1,10 @@
 using HealthMate.Domain.Common.Enums;
-using HealthMate.Infrastructure.DTO.ConditionDto;
-using HealthMate.Infrastructure.DTO.EncounterDto;
-using HealthMate.Infrastructure.DTO.LabTestDto;
-using HealthMate.Infrastructure.DTO.MedicalImageDto;
-using HealthMate.Infrastructure.DTO.MedicineDto;
-using HealthMate.Infrastructure.DTO.PrescriptionDto;
+using HealthMate.Application.Conditions.Contracts;
+using HealthMate.Application.Encounters.Contracts;
+using HealthMate.Application.LabTests.Contracts;
+using HealthMate.Application.Documents.Contracts;
+using HealthMate.Application.Prescriptions.Contracts.Medicines;
+using HealthMate.Application.Prescriptions.Contracts;
 
 namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 {

@@ -1,5 +1,5 @@
 using HealthMate.Infrastructure.Data.DbHelper;
-using HealthMate.Infrastructure.DTO.MedicineDto;
+using HealthMate.Application.Prescriptions.Contracts.Medicines;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthMate.Infrastructure.Repositories{

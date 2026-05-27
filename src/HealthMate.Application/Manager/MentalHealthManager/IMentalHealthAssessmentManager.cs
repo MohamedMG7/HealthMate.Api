@@ -1,4 +1,4 @@
-using HealthMate.Infrastructure.DTO.MentalHealthAssessmentDto;
+using HealthMate.Application.MentalHealth.Contracts;
 
 namespace HealthMate.Application.Managers
 {

@@ -1,6 +1,5 @@
-using HealthMate.Infrastructure.DTO.ConditionDto;
+using HealthMate.Application.Conditions.Contracts;
 using HealthMate.Application.Manager.ConditionManager;
-using HealthMate.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
