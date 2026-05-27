@@ -116,7 +116,7 @@ public sealed class ExceptionHandlingMiddleware(
                 StatusCodes.Status500InternalServerError,
                 "internal_error",
                 "An unexpected error occurred.",
-                $"Reference trace id: {traceId}.",
+                environment.IsDevelopment() ? exception.Message : $"Reference trace id: {traceId}.",
                 [])
         };
     }
