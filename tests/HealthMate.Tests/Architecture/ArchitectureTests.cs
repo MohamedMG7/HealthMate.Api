@@ -60,10 +60,7 @@ public sealed class ArchitectureTests
         var assembly = typeof(Program).Assembly;
 
         AssertNoDependency(
-            Types.InAssembly(assembly).That().ResideInNamespace("HealthMate.Api.Controllers"),
-            "HealthMate.Infrastructure");
-        AssertNoDependency(
-            Types.InAssembly(assembly).That().ResideInNamespace("HealthMate.Api.Middleware"),
+            Types.InAssembly(assembly).That().ResideInNamespaceStartingWith("HealthMate.Api."),
             "HealthMate.Infrastructure");
     }
 
