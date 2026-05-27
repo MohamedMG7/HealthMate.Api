@@ -1,4 +1,4 @@
-using HealthMate.Infrastructure.DTO.ObservationDto;
+using HealthMate.Application.Observations.Contracts;
 
 namespace HealthMate.Application.Manager.UtilityManager{
     public interface IUtilityManager{

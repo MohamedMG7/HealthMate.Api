@@ -8,8 +8,8 @@ internal static class PatientContractMapper
     {
         return new HumanPatientReadDto
         {
-            Patient_Id = patient.Patient_Id,
-            Patient_Fhir_Id = patient.Patient_Fhir_Id,
+            Patient_Id = patient.Id,
+            Patient_Fhir_Id = patient.FhirId,
             NationalId = patient.NationalId.Value,
             NationalIdImageUrl = patient.NationalIdImageUrl,
             BirthDate = patient.BirthDate,
@@ -26,8 +26,8 @@ internal static class PatientContractMapper
     {
         return new VerifiedHumanPatientReadDto
         {
-            Patient_Id = patient.Patient_Id,
-            Patient_Fhir_Id = patient.Patient_Fhir_Id,
+            Patient_Id = patient.Id,
+            Patient_Fhir_Id = patient.FhirId,
             NationalId = patient.NationalId.Value,
             NationalIdImageUrl = patient.NationalIdImageUrl,
             BirthDate = patient.BirthDate,

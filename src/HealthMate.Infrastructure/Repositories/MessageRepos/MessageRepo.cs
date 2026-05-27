@@ -1,7 +1,7 @@
 using HealthMate.Infrastructure.Data;
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
-using HealthMate.Infrastructure.Enums;
+using HealthMate.Application.Abstractions.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthMate.Infrastructure.Repositories.MessageRepos

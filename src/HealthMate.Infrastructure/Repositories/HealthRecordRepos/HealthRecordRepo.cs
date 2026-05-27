@@ -1,11 +1,11 @@
 using HealthMate.Domain.Common.Enums;
 using HealthMate.Infrastructure.Data.DbHelper;
-using HealthMate.Infrastructure.DTO.ConditionDto;
-using HealthMate.Infrastructure.DTO.EncounterDto;
-using HealthMate.Infrastructure.DTO.LabTestDto;
-using HealthMate.Infrastructure.DTO.MedicalImageDto;
-using HealthMate.Infrastructure.DTO.MedicineDto;
-using HealthMate.Infrastructure.DTO.PrescriptionDto;
+using HealthMate.Application.Conditions.Contracts;
+using HealthMate.Application.Encounters.Contracts;
+using HealthMate.Application.LabTests.Contracts;
+using HealthMate.Application.Documents.Contracts;
+using HealthMate.Application.Prescriptions.Contracts.Medicines;
+using HealthMate.Application.Prescriptions.Contracts;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
@@ -22,7 +22,7 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
         public async Task<(string Name, DateOnly BirthDate, float? Weight, float? Height, Gender Gender)> GetPatientGeneralInfoAsync(int patientId)
 		{
 			var result = await _context.Patients
-				.Where(p => p.Patient_Id == patientId).AsNoTracking()
+				.Where(p => p.Id == patientId).AsNoTracking()
 				.Select(p => new
 				{
 					p.ApplicationUserId,
@@ -262,7 +262,7 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 				.Select(c => new ConditionDetailsReadDto
 				{
 					DiseaseName = c.Disease.Display_Name,
-					PaientId = c.Patient.Patient_Id,
+					PaientId = c.Patient.Id,
 					DateRecorded = c.DateRecorded.ToString("yyyy-MM-dd HH:mm"),
 					ClinicalStatus = c.ClinicalStatus.ToString(),
 					Recorder = c.Recorder.ToString(),
@@ -286,7 +286,7 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 				.AsNoTracking()
 				.Select(e => new 
 				{
-					patientId = e.Patient.Patient_Id,
+					patientId = e.Patient.Id,
 					PatientNationalId = e.Patient.NationalId,
 					PatientUserId = e.Patient.ApplicationUserId,
 					HealthCareProvidersName = e.HealthCareProvider.ApplicationUser.FullName,

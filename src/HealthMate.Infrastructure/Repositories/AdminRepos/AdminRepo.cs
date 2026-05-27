@@ -16,7 +16,7 @@ namespace HealthMate.Infrastructure.Repositories.AdminRepos
 
         public Patient GetPatientWithApplicationUserData(int id)
 		{
-			return _context.Patients.FirstOrDefault(p => p.Patient_Id == id);
+			return _context.Patients.FirstOrDefault(p => p.Id == id);
 		}
 	}
 }

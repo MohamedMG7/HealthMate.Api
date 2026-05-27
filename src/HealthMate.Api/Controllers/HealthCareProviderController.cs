@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using HealthMate.Application.Abstractions.Validation;
+using HealthMate.Application.Encounters.Contracts;
 using HealthMate.Application.Manager.HealthCareProviderManager;
-using HealthMate.Infrastructure.DTO.HealthCareProviderDto;
+using HealthMate.Application.Providers.Contracts;
 using HealthMate.Application.Manager.HealthRecordManager;
 using Microsoft.AspNetCore.Authorization;
-using HealthMate.Infrastructure.Repositories;
 
 namespace HealthMate.Api.Controllers
 {

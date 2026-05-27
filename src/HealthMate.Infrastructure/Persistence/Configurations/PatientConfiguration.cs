@@ -11,10 +11,11 @@ public sealed class PatientConfiguration : IEntityTypeConfiguration<Patient>
     public void Configure(EntityTypeBuilder<Patient> builder)
     {
         builder.ToTable("Patients");
-        builder.Ignore(patient => patient.Id);
-        builder.HasKey(patient => patient.Patient_Id);
+        builder.HasKey(patient => patient.Id);
+        builder.Property(patient => patient.Id).HasColumnName("Patient_Id");
 
-        builder.Property(patient => patient.Patient_Fhir_Id)
+        builder.Property(patient => patient.FhirId)
+            .HasColumnName("Patient_Fhir_Id")
             .ValueGeneratedOnAdd()
             .HasDefaultValueSql("gen_random_uuid()::text");
 
@@ -43,7 +44,7 @@ public sealed class PatientConfiguration : IEntityTypeConfiguration<Patient>
         builder.Property(patient => patient.IsDeleted).HasDefaultValue(false);
         builder.Property(patient => patient.DeletedAt).HasColumnType("timestamp with time zone");
 
-        builder.HasIndex(patient => patient.Patient_Fhir_Id)
+        builder.HasIndex(patient => patient.FhirId)
             .HasDatabaseName("IX_Patients_Patient_Fhir_Id_Active")
             .HasFilter("\"IsDeleted\" = false");
 

@@ -1,5 +1,5 @@
+using HealthMate.Application.Abstractions.Validation;
 using HealthMate.Application.Manager;
-using HealthMate.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Org.BouncyCastle.Ocsp;

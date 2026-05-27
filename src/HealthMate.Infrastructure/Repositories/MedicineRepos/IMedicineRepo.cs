@@ -1,6 +1,6 @@
-using HealthMate.Infrastructure.DTO.MedicineDto;
+using HealthMate.Application.Prescriptions.Contracts.Medicines;
 
-namespace HealthMate.Infrastructure.Repositories{
+namespace HealthMate.Application.Prescriptions.Contracts.Medicines{
     public interface IMedicineRepo{
         Task<List<MedicineNameAndIdDto>> getMedicineNameAndId();
     }

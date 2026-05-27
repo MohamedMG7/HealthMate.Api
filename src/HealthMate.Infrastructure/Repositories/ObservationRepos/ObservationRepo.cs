@@ -1,10 +1,9 @@
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
-using HealthMate.Infrastructure.DTO.PatientDto.HumanPatientDtos;
-using HealthMate.Infrastructure.DTO.PatientDto;
+using HealthMate.Application.Patients.Contracts;
 using Microsoft.EntityFrameworkCore;
-using HealthMate.Infrastructure.DTO.ObservationDto;
-using HealthMate.Infrastructure.DTO.MachineLearningDto;
+using HealthMate.Application.Observations.Contracts;
+using HealthMate.Application.Ml.Contracts;
 
 namespace HealthMate.Infrastructure.Repositories.ObservationRepos{
     public class ObservationRepo : GenericRepository<Observation>, IObservationRepo{
@@ -27,7 +26,7 @@ namespace HealthMate.Infrastructure.Repositories.ObservationRepos{
             var startDate = endDate.AddDays(-periodInDays);
 
             var heartRates = await context.Observations
-                .Where(o => o.Patient.Patient_Id == patientId &&
+                .Where(o => o.Patient.Id == patientId &&
                            o.CodeDisplayName == "heartrate" &&
                            o.DateOfObservation >= startDate &&
                            o.DateOfObservation <= endDate)
@@ -49,7 +48,7 @@ namespace HealthMate.Infrastructure.Repositories.ObservationRepos{
             var startDate = endDate.AddDays(-periodInDays);
 
             var bloodPressureReadings = await context.Observations
-                .Where(o => o.Patient.Patient_Id == patientId &&
+                .Where(o => o.Patient.Id == patientId &&
                         o.CodeDisplayName == "bloodpressure" &&
                         o.DateOfObservation >= startDate &&
                         o.DateOfObservation <= endDate)

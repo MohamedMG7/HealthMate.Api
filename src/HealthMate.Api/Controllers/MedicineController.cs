@@ -1,4 +1,4 @@
-using HealthMate.Infrastructure.Repositories;
+using HealthMate.Application.Prescriptions.Contracts.Medicines;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HealthMate.Api.Controllers

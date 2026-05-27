@@ -1,7 +1,7 @@
-using HealthMate.Infrastructure.DTO.EncounterDto;
-using HealthMate.Infrastructure.DTO.HealthCareProviderDto;
-using HealthMate.Infrastructure.DTO.HealthRecordDto;
-using HealthMate.Infrastructure.DTO.PatientDto.HumanPatientDtos;
+using HealthMate.Application.Encounters.Contracts;
+using HealthMate.Application.Providers.Contracts;
+using HealthMate.Application.HealthRecord.Contracts;
+using HealthMate.Application.Patients.Contracts;
 
 namespace HealthMate.Application.Manager.HealthCareProviderManager
 {

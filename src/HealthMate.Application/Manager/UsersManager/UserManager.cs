@@ -1,6 +1,6 @@
 using HealthMate.Application.Abstractions.Identity.Ports;
-using HealthMate.Infrastructure.DTO.UserDto;
-using HealthMate.Infrastructure.Enums;
+using HealthMate.Application.Identity.Contracts.Users;
+using HealthMate.Application.Abstractions.Enums;
 
 namespace HealthMate.Application.Manager.UsersManager
 {

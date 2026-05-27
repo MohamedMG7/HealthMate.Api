@@ -1,7 +1,7 @@
 using HealthMate.Infrastructure.Data.Models;
-using HealthMate.Infrastructure.DTO.MachineLearningDto;
-using HealthMate.Infrastructure.DTO.ObservationDto;
-using HealthMate.Infrastructure.DTO.PatientDto.HumanPatientDtos;
+using HealthMate.Application.Ml.Contracts;
+using HealthMate.Application.Observations.Contracts;
+using HealthMate.Application.Patients.Contracts;
 
 namespace HealthMate.Infrastructure.Repositories.ObservationRepos{
     public interface IObservationRepo : IGenericRepository<Observation>{

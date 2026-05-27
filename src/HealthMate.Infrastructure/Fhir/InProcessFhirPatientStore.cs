@@ -20,7 +20,7 @@ public sealed class InProcessFhirPatientStore(
     {
         var patient = await context.Patients
             .AsNoTracking()
-            .SingleOrDefaultAsync(p => p.Patient_Fhir_Id == fhirId, ct);
+            .SingleOrDefaultAsync(p => p.FhirId == fhirId, ct);
 
         if (patient is null)
         {
@@ -39,7 +39,7 @@ public sealed class InProcessFhirPatientStore(
 
         if (query.Ids.Count > 0)
         {
-            patients = patients.Where(p => query.Ids.Contains(p.Patient_Fhir_Id));
+            patients = patients.Where(p => query.Ids.Contains(p.FhirId));
         }
 
         foreach (var filter in query.LastUpdated)
@@ -111,13 +111,13 @@ public sealed class InProcessFhirPatientStore(
         context.Patients.Add(patient);
         await context.SaveChangesAsync(ct);
 
-        return (await ReadAsync(patient.Patient_Fhir_Id, ct))!;
+        return (await ReadAsync(patient.FhirId, ct))!;
     }
 
     public async Task<FhirPatientSnapshot> UpdateAsync(FhirPatientSnapshot snapshot, uint expectedVersion, CancellationToken ct)
     {
         var patient = await context.Patients
-            .SingleOrDefaultAsync(p => p.Patient_Fhir_Id == snapshot.FhirId, ct);
+            .SingleOrDefaultAsync(p => p.FhirId == snapshot.FhirId, ct);
 
         if (patient is null)
         {
@@ -159,7 +159,7 @@ public sealed class InProcessFhirPatientStore(
 
     public async Task DeleteAsync(string fhirId, uint? expectedVersion, CancellationToken ct)
     {
-        var patient = await context.Patients.SingleOrDefaultAsync(p => p.Patient_Fhir_Id == fhirId, ct);
+        var patient = await context.Patients.SingleOrDefaultAsync(p => p.FhirId == fhirId, ct);
         if (patient is null)
         {
             throw new FhirNotFoundException("Patient", fhirId);
@@ -278,7 +278,7 @@ public sealed class InProcessFhirPatientStore(
     private static FhirPatientSnapshot ToSnapshot(Patient patient, ApplicationUser? user)
     {
         return new FhirPatientSnapshot(
-            patient.Patient_Fhir_Id,
+            patient.FhirId,
             patient.NationalId.Value,
             user is null ? null : $"{user.First_Name} {user.Last_Name}".Trim(),
             patient.BirthDate,

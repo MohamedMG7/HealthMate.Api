@@ -1,6 +1,6 @@
 using FluentAssertions;
 using HealthMate.Application.Manager.MachineLearningManager;
-using HealthMate.Infrastructure.DTO.MachineLearningDto;
+using HealthMate.Application.Ml.Contracts;
 using HealthMate.Infrastructure.Repositories.ObservationRepos;
 using Moq;
 

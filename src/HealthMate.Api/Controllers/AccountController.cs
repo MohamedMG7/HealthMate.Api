@@ -1,4 +1,4 @@
-using HealthMate.Infrastructure.DTO.AccountDto;
+using HealthMate.Application.Identity.Contracts;
 using HealthMate.Application.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -13,11 +13,9 @@ namespace HealthMate.Api.Controllers
 	public class AccountController : ControllerBase
 	{
         private readonly IAccountManager _AccountManager;
-		private readonly IFileService _FileService;
-        public AccountController(IAccountManager AccountManager,IFileService FileService)
+        public AccountController(IAccountManager AccountManager)
         {
             _AccountManager = AccountManager;
-			_FileService = FileService;
         }
 
         [HttpPost("Register")]

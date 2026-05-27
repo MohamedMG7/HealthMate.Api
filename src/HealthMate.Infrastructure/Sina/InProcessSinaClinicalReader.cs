@@ -1,6 +1,6 @@
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
-using HealthMate.Infrastructure.Enums;
+using HealthMate.Application.Abstractions.Enums;
 using HealthMate.Sina.Ports;
 using HealthMate.Sina.Tools;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +20,7 @@ public class InProcessSinaClinicalReader : ISinaClinicalReader
 
     public async Task<PatientChartSummary?> GetPatientChartAsync(int patientId, CancellationToken ct)
     {
-        var patient = await context.Patients.AsNoTracking().FirstOrDefaultAsync(p => p.Patient_Id == patientId, ct);
+        var patient = await context.Patients.AsNoTracking().FirstOrDefaultAsync(p => p.Id == patientId, ct);
         if (patient is null)
         {
             return null;
@@ -60,8 +60,8 @@ public class InProcessSinaClinicalReader : ISinaClinicalReader
         var abnormalLabs = await GetRecentAbnormalLabsAsync(patientId, 90, ct);
 
         return new PatientChartSummary(
-            patient.Patient_Id,
-            $"#P-{patient.Patient_Id}",
+            patient.Id,
+            $"#P-{patient.Id}",
             patient.Gender.ToString(),
             CalculateAge(patient.BirthDate),
             patient.Governorate.Value,

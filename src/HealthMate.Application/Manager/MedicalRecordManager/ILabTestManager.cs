@@ -1,4 +1,4 @@
-using HealthMate.Infrastructure.DTO.LabTestDto;
+using HealthMate.Application.LabTests.Contracts;
 
 namespace HealthMate.Application.Manager.LabTestManager{
     public interface ILabTestManager{

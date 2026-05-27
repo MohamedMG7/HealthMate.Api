@@ -1,4 +1,4 @@
-using HealthMate.Infrastructure.DTO.AdminDto;
+using HealthMate.Application.Identity.Contracts;
 
 namespace HealthMate.Application.Manager.AdminManager
 {

@@ -1,4 +1,4 @@
-using HealthMate.Infrastructure.DTO.PatientDto.AnimalPatientDtos;
+using HealthMate.Application.Patients.Contracts;
 using HealthMate.Application.Common;
 using HealthMate.Application.Manager.PatientManager;
 using HealthMate.Application.Patients.Commands;

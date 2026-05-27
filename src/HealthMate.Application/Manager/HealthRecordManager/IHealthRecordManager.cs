@@ -1,8 +1,8 @@
-using HealthMate.Infrastructure.DTO.EncounterDto;
-using HealthMate.Infrastructure.DTO.HealthRecordDto;
-using HealthMate.Infrastructure.DTO.LabTestDto;
-using HealthMate.Infrastructure.DTO.MedicalImageDto;
-using HealthMate.Infrastructure.DTO.PrescriptionDto;
+using HealthMate.Application.Encounters.Contracts;
+using HealthMate.Application.HealthRecord.Contracts;
+using HealthMate.Application.LabTests.Contracts;
+using HealthMate.Application.Documents.Contracts;
+using HealthMate.Application.Prescriptions.Contracts;
 
 
 namespace HealthMate.Application.Manager.HealthRecordManager

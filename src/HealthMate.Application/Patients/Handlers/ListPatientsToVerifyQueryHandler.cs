@@ -22,7 +22,7 @@ public sealed class ListPatientsToVerifyQueryHandler(
             var hasAccount = patient.ApplicationUserId is not null && accounts.TryGetValue(patient.ApplicationUserId, out account);
             return new AdminVerifyPatientReadDto
             {
-                Id = patient.Patient_Id,
+                Id = patient.Id,
                 First_Name = hasAccount ? account!.FirstName : "No Data",
                 Last_Name = hasAccount ? account!.LastName : "No Data",
                 NationalIdNumber = patient.NationalId.Value,

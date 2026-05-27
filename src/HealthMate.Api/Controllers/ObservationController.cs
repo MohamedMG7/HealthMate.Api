@@ -1,4 +1,4 @@
-using HealthMate.Infrastructure.DTO.ObservationDto;
+using HealthMate.Application.Observations.Contracts;
 using HealthMate.Application.Manager.ObservationManager;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;

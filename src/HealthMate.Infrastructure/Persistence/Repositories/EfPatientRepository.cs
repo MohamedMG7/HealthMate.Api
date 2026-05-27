@@ -9,12 +9,12 @@ public sealed class EfPatientRepository(HealthMateContext context) : IPatientRep
 {
     public Task<Patient?> GetByIdAsync(int patientId, CancellationToken ct)
     {
-        return context.Patients.FirstOrDefaultAsync(patient => patient.Patient_Id == patientId, ct);
+        return context.Patients.FirstOrDefaultAsync(patient => patient.Id == patientId, ct);
     }
 
     public Task<Patient?> GetByFhirIdAsync(string fhirId, CancellationToken ct)
     {
-        return context.Patients.FirstOrDefaultAsync(patient => patient.Patient_Fhir_Id == fhirId, ct);
+        return context.Patients.FirstOrDefaultAsync(patient => patient.FhirId == fhirId, ct);
     }
 
     public Task<Patient?> GetByNationalIdAsync(NationalId nationalId, CancellationToken ct)
@@ -24,7 +24,7 @@ public sealed class EfPatientRepository(HealthMateContext context) : IPatientRep
 
     public async Task<IReadOnlyList<Patient>> ListAsync(CancellationToken ct)
     {
-        return await context.Patients.AsNoTracking().OrderBy(patient => patient.Patient_Id).ToArrayAsync(ct);
+        return await context.Patients.AsNoTracking().OrderBy(patient => patient.Id).ToArrayAsync(ct);
     }
 
     public async Task<IReadOnlyList<Patient>> ListVerifiedAsync(CancellationToken ct)
@@ -32,7 +32,7 @@ public sealed class EfPatientRepository(HealthMateContext context) : IPatientRep
         return await context.Patients
             .AsNoTracking()
             .Where(static patient => patient.IsVerified)
-            .OrderBy(patient => patient.Patient_Id)
+            .OrderBy(patient => patient.Id)
             .ToArrayAsync(ct);
     }
 
@@ -41,7 +41,7 @@ public sealed class EfPatientRepository(HealthMateContext context) : IPatientRep
         return await context.Patients
             .AsNoTracking()
             .Where(static patient => !patient.IsVerified)
-            .OrderBy(patient => patient.Patient_Id)
+            .OrderBy(patient => patient.Id)
             .ToArrayAsync(ct);
     }
 
@@ -52,7 +52,7 @@ public sealed class EfPatientRepository(HealthMateContext context) : IPatientRep
 
     public Task<bool> ExistsByIdAsync(int patientId, CancellationToken ct)
     {
-        return context.Patients.AnyAsync(patient => patient.Patient_Id == patientId, ct);
+        return context.Patients.AnyAsync(patient => patient.Id == patientId, ct);
     }
 
     public Task<bool> ExistsByNationalIdAsync(NationalId nationalId, CancellationToken ct)

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using HealthMate.Infrastructure.DTO.MentalHealthAssessmentDto;
+using HealthMate.Application.MentalHealth.Contracts;
 using HealthMate.Application.Managers;
 
 namespace HealthMate.Api.Controllers

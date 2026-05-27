@@ -1,6 +1,6 @@
 using HealthMate.Application.Abstractions.Identity.Ports;
 using HealthMate.Infrastructure.Data.Models;
-using HealthMate.Infrastructure.Enums;
+using HealthMate.Application.Abstractions.Enums;
 
 namespace HealthMate.Infrastructure.Identity.Repositories;
 

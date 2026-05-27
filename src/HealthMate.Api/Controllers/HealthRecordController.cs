@@ -1,5 +1,5 @@
 using HealthMate.Application.Manager.HealthRecordManager;
-using HealthMate.Infrastructure.DTO.HealthRecordDto;
+using HealthMate.Application.HealthRecord.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

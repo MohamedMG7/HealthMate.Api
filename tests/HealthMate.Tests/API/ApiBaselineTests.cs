@@ -8,7 +8,7 @@ using HealthMate.Domain.Aggregates.Patient.ValueObjects;
 using HealthMate.Domain.Identity;
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
-using HealthMate.Infrastructure.Enums;
+using HealthMate.Application.Abstractions.Enums;
 using HealthMate.Tests.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using DomainGender = HealthMate.Domain.Common.Enums.Gender;

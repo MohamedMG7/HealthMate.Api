@@ -1,4 +1,4 @@
-using HealthMate.Infrastructure.Enums;
+using HealthMate.Application.Abstractions.Enums;
 
 namespace HealthMate.Infrastructure.Data.Models
 {

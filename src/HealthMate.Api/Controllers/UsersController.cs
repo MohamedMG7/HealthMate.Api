@@ -1,4 +1,4 @@
-using HealthMate.Infrastructure.DTO.UserDto;
+using HealthMate.Application.Identity.Contracts.Users;
 using HealthMate.Application.Manager.UsersManager;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

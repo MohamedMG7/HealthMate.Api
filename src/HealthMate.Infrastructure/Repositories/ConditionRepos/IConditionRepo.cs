@@ -1,5 +1,5 @@
 using HealthMate.Infrastructure.Data.Models;
-using HealthMate.Infrastructure.DTO.ConditionDto;
+using HealthMate.Application.Conditions.Contracts;
 
 namespace HealthMate.Infrastructure.Repositories.ConditionRepos{
     public interface IConditionRepo : IGenericRepository<Condition>{

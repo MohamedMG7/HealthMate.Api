@@ -12,7 +12,7 @@ using HealthMate.Fhir.Ports;
 using HealthMate.Fhir.Ports.Dtos;
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
-using HealthMate.Infrastructure.Enums;
+using HealthMate.Application.Abstractions.Enums;
 using HealthMate.Tests.Infrastructure;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
@@ -132,7 +132,7 @@ public sealed class FhirPatientFacadeTests(WebAppFixture fixture) : IClassFixtur
 
         using var scope = fixture.Factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<HealthMateContext>();
-        var persisted = context.Patients.AsNoTracking().Single(p => p.Patient_Fhir_Id == fhirId);
+        var persisted = context.Patients.AsNoTracking().Single(p => p.FhirId == fhirId);
         persisted.IsVerified.Should().BeTrue("FHIR PUT must not flip the admin-managed verification flag");
         persisted.City.Value.Should().Be("Fake_City_Verified_PUT");
     }
@@ -209,7 +209,7 @@ public sealed class FhirPatientFacadeTests(WebAppFixture fixture) : IClassFixtur
         context.Patients.Add(patient);
         context.HealthCareProviders.Add(provider);
         await context.SaveChangesAsync();
-        return (patient.Patient_Fhir_Id, provider.HealthCareProvider_Id);
+        return (patient.FhirId, provider.HealthCareProvider_Id);
     }
 
     private static StringContent FhirContent(string json) => new(json, Encoding.UTF8, "application/fhir+json");

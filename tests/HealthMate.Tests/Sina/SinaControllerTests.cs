@@ -10,7 +10,7 @@ using HealthMate.Domain.Aggregates.Patient.ValueObjects;
 using HealthMate.Domain.Identity;
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
-using HealthMate.Infrastructure.Enums;
+using HealthMate.Application.Abstractions.Enums;
 using HealthMate.Sina.Sessions;
 using HealthMate.Tests.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -117,7 +117,7 @@ public sealed class SinaControllerTests(WebAppFixture fixture) : IClassFixture<W
         context.Patients.Add(patient);
         context.HealthCareProviders.Add(provider);
         await context.SaveChangesAsync();
-        return (patient.Patient_Id, provider.HealthCareProvider_Id);
+        return (patient.Id, provider.HealthCareProvider_Id);
     }
 
     private static string CreateToken(string role, int subjectId)

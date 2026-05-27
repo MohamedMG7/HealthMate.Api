@@ -1,5 +1,5 @@
-using HealthMate.Infrastructure.DTO.ConditionDto;
-using HealthMate.Infrastructure.DTO.EncounterDto;
+using HealthMate.Application.Conditions.Contracts;
+using HealthMate.Application.Encounters.Contracts;
 using HealthMate.Application.Manager.ConditionManager;
 using HealthMate.Application.Manager.EncounterManager;
 using Microsoft.AspNetCore.Authorization;

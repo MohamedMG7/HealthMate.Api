@@ -1,15 +1,16 @@
 using System.Text;
 using System.Text.RegularExpressions;
-using EndEncounterDto;
+using HealthMate.Application.Encounters.Contracts;
 using HealthMate.Domain.Aggregates.Patient.ValueObjects;
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
-using HealthMate.Infrastructure.DTO;
-using HealthMate.Infrastructure.DTO.ConditionDto;
-using HealthMate.Infrastructure.DTO.EncounterDto;
-using HealthMate.Infrastructure.DTO.EndEcnounterDto;
-using HealthMate.Infrastructure.DTO.HealthCareProviderDto;
-using HealthMate.Infrastructure.DTO.LabTestDto;
+using HealthMate.Application.Conditions.Contracts;
+using HealthMate.Application.Documents.Contracts;
+using HealthMate.Application.Encounters.Contracts;
+using HealthMate.Application.Encounters.Contracts;
+using HealthMate.Application.Providers.Contracts;
+using HealthMate.Application.LabTests.Contracts;
+using HealthMate.Application.Prescriptions.Contracts;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthMate.Infrastructure.Repositories.HealthCareProviderRepos
@@ -340,7 +341,7 @@ namespace HealthMate.Infrastructure.Repositories.HealthCareProviderRepos
 			var nationalId = NationalId.FromTrusted(PatientNationalId);
 			var patient = await _context.Patients
 				.FirstOrDefaultAsync(patient => patient.NationalId == nationalId);
-			return patient.Patient_Id;
+			return patient.Id;
 		}
 		#endregion
 

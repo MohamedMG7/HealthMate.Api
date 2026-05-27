@@ -1,4 +1,4 @@
-using HealthMate.Infrastructure.DTO.MachineLearningDto;
+using HealthMate.Application.Ml.Contracts;
 
 namespace HealthMate.Application.Manager.MachineLearningManager;
 

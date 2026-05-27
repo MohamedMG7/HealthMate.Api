@@ -1,7 +1,7 @@
 using HealthMate.Infrastructure.Data.Models;
-using HealthMate.Infrastructure.DTO.ConditionDto;
-using HealthMate.Infrastructure.DTO.EndEcnounterDto;
-using HealthMate.Infrastructure.DTO.HealthCareProviderDto;
+using HealthMate.Application.Conditions.Contracts;
+using HealthMate.Application.Encounters.Contracts;
+using HealthMate.Application.Providers.Contracts;
 
 
 namespace HealthMate.Infrastructure.Repositories.HealthCareProviderRepos

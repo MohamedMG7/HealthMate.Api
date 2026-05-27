@@ -1,7 +1,5 @@
-using HealthMate.Infrastructure.DTO;
+using HealthMate.Application.Documents.Contracts;
 using HealthMate.Application.Manager.MedicalRecordManager;
-using HealthMate.Infrastructure.Data.Models;
-using HealthMate.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 
@@ -10,11 +8,9 @@ namespace HealthMate.Api.Controllers{
     [Route("api/[controller]")]
     [ApiController]
     public class MedicalImageController : ControllerBase{
-        private readonly IGenericRepository<MedicalImage> _MedicalImageRepo;
         private readonly IRecordImageManager _RecordImageManager;
-        public MedicalImageController(IGenericRepository<MedicalImage> MedicalImageRepo,IRecordImageManager RecordImageManager)
+        public MedicalImageController(IRecordImageManager RecordImageManager)
         {
-            _MedicalImageRepo = MedicalImageRepo;
             _RecordImageManager = RecordImageManager;
         }
 

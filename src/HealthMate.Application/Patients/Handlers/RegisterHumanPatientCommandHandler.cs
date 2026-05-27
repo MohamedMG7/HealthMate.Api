@@ -34,7 +34,7 @@ public sealed class RegisterHumanPatientCommandHandler(
         await patientRepository.AddAsync(patient, ct);
         await patientRepository.SaveChangesAsync(ct);
 
-        logger.LogInformation("Registered patient aggregate {PatientId}", patient.Patient_Id);
-        return new RegisterHumanPatientResult(patient.Patient_Id, patient.Patient_Fhir_Id);
+        logger.LogInformation("Registered patient aggregate {PatientId}", patient.Id);
+        return new RegisterHumanPatientResult(patient.Id, patient.FhirId);
     }
 }

@@ -1,5 +1,5 @@
-using HealthMate.Infrastructure.DTO.ConditionDto;
-using HealthMate.Infrastructure.DTO.EncounterDto;
+using HealthMate.Application.Conditions.Contracts;
+using HealthMate.Application.Encounters.Contracts;
 
 namespace HealthMate.Application.Manager.EncounterManager
 {
