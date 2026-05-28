@@ -12,6 +12,7 @@ using HealthMate.Application.LabTests.Contracts;
 using HealthMate.Application.Manager.UtilityManager;
 using HealthMate.Application.Abstractions.Enums;
 using HealthMate.Domain.Aggregates.Encounter;
+using HealthMate.Domain.Aggregates.Observation;
 using HealthMate.Infrastructure.Data.DbHelper;
 
 namespace HealthMate.Application.Manager.HealthRecordManager
@@ -36,16 +37,31 @@ namespace HealthMate.Application.Manager.HealthRecordManager
 		{
 			var encounters = _encounterRepo.GetAll().Where(p => p.PatientId == patientId).ToList();
 			var conditions = _conditionRepo.GetAll().Include(sc => sc.Disease).Where(p => p.PaientId == patientId).ToList();
-			var observations = _observationRepo.GetAll().Include(sc => sc.BodySite).Include(sc => sc.Patient).Where(p => p.PatientId == patientId).ToList();
+			var observations = _observationRepo.GetAll().Where(p => p.PatientId == patientId).ToList();
 			var context = (HealthMateContext)_observationRepo.GetContext();
+			var patientIds = observations
+				.Select(o => o.PatientId)
+				.Distinct()
+				.ToArray();
+			var patients = context.Patients
+				.Where(patient => patientIds.Contains(patient.Id))
+				.ToDictionary(patient => patient.Id);
 			var patientUserIds = observations
-				.Select(o => o.Patient.ApplicationUserId)
+				.Select(o => patients.TryGetValue(o.PatientId, out var patient) ? patient.ApplicationUserId : null)
 				.Where(id => !string.IsNullOrWhiteSpace(id))
 				.Distinct()
 				.ToArray();
 			var patientUsers = context.Users
 				.Where(user => patientUserIds.Contains(user.Id))
 				.ToDictionary(user => user.Id);
+			var bodySiteIds = observations
+				.Select(o => o.BodySiteId)
+				.OfType<int>()
+				.Distinct()
+				.ToArray();
+			var bodySites = context.BodySites
+				.Where(bodySite => bodySiteIds.Contains(bodySite.BodySite_Id))
+				.ToDictionary(bodySite => bodySite.BodySite_Id);
 
 			var encounterList = encounters.Select(x => new EncounterReadDto
 			{
@@ -79,17 +95,17 @@ namespace HealthMate.Application.Manager.HealthRecordManager
 
 			var observationList = observations.Select(x => new ObservationReadDto
 			{
-				Observation_Id = x.Observation_Id,
-				Observation_Fhir_Id = x.Observation_Fhir_Id,
+				Observation_Id = x.Id,
+				Observation_Fhir_Id = x.FhirId,
 				Category = x.Category,
 				Code = x.Code,
 				CodeDisplayName = x.CodeDisplayName,
 				DateOfObservation = x.DateOfObservation,
-				Interpertation = x.Interpertation,
-				ValueQuanitity = x.ValueQuanitity,
+				Interpertation = x.Interpretation,
+				ValueQuanitity = x.ValueQuantity,
 				ValueUnit = x.ValueUnit,
-				PatientName = x.Patient.ApplicationUserId is not null && patientUsers.TryGetValue(x.Patient.ApplicationUserId, out var user) ? user.First_Name : "No Data",
-				BodySiteName = x.BodySite != null ? x.BodySite.DisplayName : "No Data",
+				PatientName = patients.TryGetValue(x.PatientId, out var patient) && patient.ApplicationUserId is not null && patientUsers.TryGetValue(patient.ApplicationUserId, out var user) ? user.First_Name : "No Data",
+				BodySiteName = x.BodySiteId.HasValue && bodySites.TryGetValue(x.BodySiteId.Value, out var bodySite) ? bodySite.DisplayName : "No Data",
 			});
 
 			var healthRecordsDto = new HealthRecordsReadDto

@@ -87,7 +87,7 @@ public class InProcessSinaClinicalReader : ISinaClinicalReader
     public async Task<IReadOnlyList<ObservationSummary>> SearchObservationsAsync(int patientId, string codeOrDisplay, DateTime? from, DateTime? to, int limit, CancellationToken ct)
     {
         var term = codeOrDisplay.Trim();
-        var query = context.Observations.AsNoTracking().Where(o => o.PatientId == patientId && !o.isDeleted);
+        var query = context.Observations.AsNoTracking().Where(o => o.PatientId == patientId && !o.IsDeleted);
         if (!string.IsNullOrWhiteSpace(term))
         {
             query = query.Where(o =>
@@ -109,13 +109,13 @@ public class InProcessSinaClinicalReader : ISinaClinicalReader
             .OrderByDescending(o => o.DateOfObservation)
             .Take(limit)
             .Select(o => new ObservationSummary(
-                o.Observation_Id,
-                $"#O-{o.Observation_Id}",
+                o.Id,
+                $"#O-{o.Id}",
                 o.Code,
                 o.CodeDisplayName,
-                o.ValueQuanitity,
+                o.ValueQuantity,
                 o.ValueUnit,
-                o.Interpertation,
+                o.Interpretation,
                 o.DateOfObservation))
             .ToArrayAsync(ct);
     }

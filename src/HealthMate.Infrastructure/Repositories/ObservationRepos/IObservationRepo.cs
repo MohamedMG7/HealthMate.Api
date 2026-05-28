@@ -1,4 +1,4 @@
-using HealthMate.Infrastructure.Data.Models;
+using HealthMate.Domain.Aggregates.Observation;
 using HealthMate.Application.Ml.Contracts;
 using HealthMate.Application.Observations.Contracts;
 using HealthMate.Application.Patients.Contracts;

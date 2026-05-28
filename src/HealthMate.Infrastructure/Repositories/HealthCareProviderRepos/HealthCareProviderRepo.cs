@@ -2,7 +2,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using HealthMate.Application.Encounters.Contracts;
 using HealthMate.Domain.Aggregates.Encounter;
+using HealthMate.Domain.Aggregates.Observation;
 using HealthMate.Domain.Aggregates.Patient.ValueObjects;
+using HealthMate.Domain.Common;
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
 using HealthMate.Application.Conditions.Contracts;
@@ -19,12 +21,14 @@ namespace HealthMate.Infrastructure.Repositories.HealthCareProviderRepos
 		private readonly HealthMateContext _context;
 		private readonly IDbContextFactory<HealthMateContext> _contextFactory; // parallel
 		private readonly ILabTestAttributeRepo _LabTestRepo;
+		private readonly IDateTimeProvider _clock;
 		
-        public HealthCareProviderRepo(HealthMateContext context, ILabTestAttributeRepo LabTestRepo, IDbContextFactory<HealthMateContext> contextFactory) : base(context) 
+		public HealthCareProviderRepo(HealthMateContext context, ILabTestAttributeRepo LabTestRepo, IDbContextFactory<HealthMateContext> contextFactory, IDateTimeProvider clock) : base(context)
         {
             _context= context;
 			_LabTestRepo = LabTestRepo;
 			_contextFactory = contextFactory;
+			_clock = clock;
 		}
 
 		public async Task<string> GetHealthCareProviderImageUrl(int healthCareProviderId){
@@ -201,20 +205,21 @@ namespace HealthMate.Infrastructure.Repositories.HealthCareProviderRepos
 			await _context.Conditions.AddAsync(condition);
 		}
 
-		private async Task CreateObservation(EndEncounterObservationAddDto observationData, int patientId){
-			var now = DateTime.UtcNow.AddHours(2);
-			var observation = new Observation{
-				PatientId = patientId,
-				BodySiteId = observationData.BodySiteId,
-				Category = observationData.Category,
-				Code = observationData.Code,
-				CodeDisplayName = observationData.ObservationName.ToLower(),
-				Interpertation = observationData.Interpertation,
-				DateOfObservation = now,
-				ValueQuanitity = observationData.ValueQuanitity,
-				NameIdentifier = $"{patientId}-{Regex.Replace(observationData.ObservationName.ToLower(),@"\s+", "")}-{now:yyyyMMddHHmmsss}",
-				ValueUnit = observationData.ValueUnit
-			};
+		private async Task CreateObservation(EndEncounterObservationAddDto observationData, int patientId, int encounterId){
+			var now = _clock.UtcNow.UtcDateTime;
+			var observation = Observation.Record(
+				patientId,
+				encounterId,
+				observationData.Category,
+				observationData.Code,
+				observationData.ObservationName.ToLower(),
+				observationData.ValueQuanitity,
+				observationData.ValueUnit,
+				observationData.Interpertation,
+				observationData.BodySiteId,
+				now,
+				null,
+				_clock);
 
 			await _context.Observations.AddAsync(observation);
 		}
@@ -333,7 +338,7 @@ namespace HealthMate.Infrastructure.Repositories.HealthCareProviderRepos
 				// 6. Create Observations
 				if(endEcounterDto.Observations != null){
 					foreach(var observation in endEcounterDto.Observations){
-						await CreateObservation(observation,PatientId);
+						await CreateObservation(observation,PatientId,encounterId);
 					}
 				}
 

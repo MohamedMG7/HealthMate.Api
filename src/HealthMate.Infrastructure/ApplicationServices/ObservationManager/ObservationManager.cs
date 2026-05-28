@@ -1,5 +1,6 @@
 using HealthMate.Application.Encounters.Contracts;
 using HealthMate.Application.Observations.Contracts;
+using HealthMate.Domain.Aggregates.Observation;
 using HealthMate.Infrastructure.Data.Models;
 using HealthMate.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -25,23 +26,10 @@ namespace HealthMate.Application.Manager.ObservationManager
         }
 
 		#region CRUD
+		[Obsolete("Use POST /api/Encounter/{encounterId}/observations; will be removed after Slice 5.")]
 		public void AddObservation(ObservationAddDto observationDto)
 		{
-			var observation = new Observation { 
-				Category = observationDto.Category,
-				isDeleted = false,
-				PatientId = observationDto.PatientId,
-				ValueQuanitity = observationDto.ValueQuanitity,
-				ValueUnit = observationDto.ValueUnit,
-				DateOfObservation = observationDto.DateOfObservation,
-				BodySiteId = observationDto.BodySiteId,
-				Code = observationDto.Code,
-				CodeDisplayName = observationDto.CodeDisplayName,
-				Interpertation = observationDto.Interpertation
-			};
-
-			_observationRepo.Add(observation);
-			_observationRepo.Save();
+			throw new NotImplementedException("Use POST /api/Encounter/{id}/observations");
 		}
 
 		public void DeleteObservation(int ObservationId)
@@ -51,30 +39,45 @@ namespace HealthMate.Application.Manager.ObservationManager
 
 		public IEnumerable<ObservationReadDto> GetAllObservations()
 		{
-			var observations = _observationRepo.GetAll().Include(sc => sc.BodySite).Include(sc => sc.Patient).ToList();
+			var observations = _observationRepo.GetAll().ToList();
 			var context = (HealthMateContext)_observationRepo.GetContext();
+			var patientIds = observations
+				.Select(o => o.PatientId)
+				.Distinct()
+				.ToArray();
+			var patients = context.Patients
+				.Where(patient => patientIds.Contains(patient.Id))
+				.ToDictionary(patient => patient.Id);
 			var patientUserIds = observations
-				.Select(o => o.Patient.ApplicationUserId)
+				.Select(o => patients.TryGetValue(o.PatientId, out var patient) ? patient.ApplicationUserId : null)
 				.Where(id => !string.IsNullOrWhiteSpace(id))
 				.Distinct()
 				.ToArray();
 			var patientUsers = context.Users
 				.Where(user => patientUserIds.Contains(user.Id))
 				.ToDictionary(user => user.Id);
+			var bodySiteIds = observations
+				.Select(o => o.BodySiteId)
+				.OfType<int>()
+				.Distinct()
+				.ToArray();
+			var bodySites = context.BodySites
+				.Where(bodySite => bodySiteIds.Contains(bodySite.BodySite_Id))
+				.ToDictionary(bodySite => bodySite.BodySite_Id);
 
 			var observationList = observations.Select(x => new ObservationReadDto
 			{
-				Observation_Id = x.Observation_Id,
-				Observation_Fhir_Id = x.Observation_Fhir_Id,
+				Observation_Id = x.Id,
+				Observation_Fhir_Id = x.FhirId,
 				Category = x.Category,
 				Code = x.Code,
 				CodeDisplayName= x.CodeDisplayName,
 				DateOfObservation= x.DateOfObservation,
-				Interpertation= x.Interpertation,
-				ValueQuanitity= x.ValueQuanitity,
+				Interpertation= x.Interpretation,
+				ValueQuanitity= x.ValueQuantity,
 				ValueUnit = x.ValueUnit,
-				PatientName = x.Patient.ApplicationUserId is not null && patientUsers.TryGetValue(x.Patient.ApplicationUserId, out var user) ? user.First_Name : "No Data",
-				BodySiteName = x.BodySite != null ? x.BodySite.DisplayName : "No Data",
+				PatientName = patients.TryGetValue(x.PatientId, out var patient) && patient.ApplicationUserId is not null && patientUsers.TryGetValue(patient.ApplicationUserId, out var user) ? user.First_Name : "No Data",
+				BodySiteName = x.BodySiteId.HasValue && bodySites.TryGetValue(x.BodySiteId.Value, out var bodySite) ? bodySite.DisplayName : "No Data",
 			});
 
 			return observationList;
@@ -91,18 +94,33 @@ namespace HealthMate.Application.Manager.ObservationManager
 
 			ObservationReadDto observationRead = new ObservationReadDto
 			{
-				Observation_Id = observation.Observation_Id,
-				Observation_Fhir_Id = observation.Observation_Fhir_Id,
+				Observation_Id = observation.Id,
+				Observation_Fhir_Id = observation.FhirId,
 				Category = observation.Category,
 				Code = observation.Code,
 				CodeDisplayName = observation.CodeDisplayName,
 				DateOfObservation = observation.DateOfObservation,
-				Interpertation = observation.Interpertation,
-				ValueQuanitity = observation.ValueQuanitity,
+				Interpertation = observation.Interpretation,
+				ValueQuanitity = observation.ValueQuantity,
 				ValueUnit = observation.ValueUnit,
-				BodySiteName = observation.BodySite != null ? observation.BodySite.DisplayName : null
+				PatientName = "No Data",
+				BodySiteName = GetBodySiteName(observation.BodySiteId)
 			};
 			return observationRead;
+		}
+
+		private string? GetBodySiteName(int? bodySiteId)
+		{
+			if (!bodySiteId.HasValue)
+			{
+				return null;
+			}
+
+			var context = (HealthMateContext)_observationRepo.GetContext();
+			return context.BodySites
+				.Where(bodySite => bodySite.BodySite_Id == bodySiteId.Value)
+				.Select(bodySite => bodySite.DisplayName)
+				.FirstOrDefault();
 		}
 
 		#endregion

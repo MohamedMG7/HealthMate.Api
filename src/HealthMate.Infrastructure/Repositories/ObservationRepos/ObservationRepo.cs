@@ -1,5 +1,5 @@
 using HealthMate.Infrastructure.Data.DbHelper;
-using HealthMate.Infrastructure.Data.Models;
+using HealthMate.Domain.Aggregates.Observation;
 using HealthMate.Application.Patients.Contracts;
 using Microsoft.EntityFrameworkCore;
 using HealthMate.Application.Observations.Contracts;
@@ -26,13 +26,13 @@ namespace HealthMate.Infrastructure.Repositories.ObservationRepos{
             var startDate = endDate.AddDays(-periodInDays);
 
             var heartRates = await context.Observations
-                .Where(o => o.Patient.Id == patientId &&
+                .Where(o => o.PatientId == patientId &&
                            o.CodeDisplayName == "heartrate" &&
                            o.DateOfObservation >= startDate &&
                            o.DateOfObservation <= endDate)
                 .Select(o => new HeartRateValueAndDateDto
                 {
-                    HeartRateValue = o.ValueQuanitity.Value,
+                    HeartRateValue = o.ValueQuantity!.Value,
                     Date = o.DateOfObservation.ToString("yyyy-MM-dd")
                 })
                 .ToListAsync();
@@ -48,13 +48,13 @@ namespace HealthMate.Infrastructure.Repositories.ObservationRepos{
             var startDate = endDate.AddDays(-periodInDays);
 
             var bloodPressureReadings = await context.Observations
-                .Where(o => o.Patient.Id == patientId &&
+                .Where(o => o.PatientId == patientId &&
                         o.CodeDisplayName == "bloodpressure" &&
                         o.DateOfObservation >= startDate &&
                         o.DateOfObservation <= endDate)
                 .Select(o => new bloodPressureValueAndDateDto
                 {
-                    Value = o.ValueQuanitity.Value,
+                    Value = o.ValueQuantity!.Value,
                     Date = o.DateOfObservation.ToString("yyyy-MM-dd")
                 })
                 .ToListAsync();
@@ -98,7 +98,7 @@ namespace HealthMate.Infrastructure.Repositories.ObservationRepos{
                 .OrderBy(o => o.DateOfObservation)
                 .Select(o => new GlucoseLevelValueAndDateDto
                 {
-                    GlucoseLevelValue = o.ValueQuanitity ?? 0,
+                    GlucoseLevelValue = o.ValueQuantity ?? 0,
                     Date = o.DateOfObservation.ToString("yyyy-MM-dd")
                 })
                 .ToListAsync();
@@ -159,7 +159,7 @@ namespace HealthMate.Infrastructure.Repositories.ObservationRepos{
 
             var result = await context.Observations
                 .Where(o => o.PatientId == patientId && o.CodeDisplayName == "bloodpressure" && o.DateOfObservation >= DateTime.Now.AddDays(-periodInDays))
-                .MaxAsync(o => o.ValueQuanitity);
+                .MaxAsync(o => o.ValueQuantity);
             return result.ToString();
         }
 
@@ -169,7 +169,7 @@ namespace HealthMate.Infrastructure.Repositories.ObservationRepos{
 
             var result = await context.Observations
                 .Where(o => o.PatientId == patientId && o.CodeDisplayName == "bloodpressure" && o.DateOfObservation >= DateTime.Now.AddDays(-periodInDays))
-                .MinAsync(o => o.ValueQuanitity);
+                .MinAsync(o => o.ValueQuantity);
             return result.ToString();
         }
 
@@ -236,7 +236,7 @@ namespace HealthMate.Infrastructure.Repositories.ObservationRepos{
                 .Where(o => o.PatientId == patientId && 
                         o.CodeDisplayName == "glucose")
                 .OrderByDescending(o => o.DateOfObservation)
-                .Select(o => o.ValueQuanitity ?? 0)
+                .Select(o => o.ValueQuantity ?? 0)
                 .FirstOrDefaultAsync();
 
             return lastGlucose;
@@ -251,7 +251,7 @@ namespace HealthMate.Infrastructure.Repositories.ObservationRepos{
         //         .Where(o => o.PatientId == patientId && 
         //                 o.CodeDisplayName == "bloodpressure")
         //         .OrderByDescending(o => o.DateOfObservation)
-        //         .Select(o => o.ValueQuanitity ?? 0)
+        //         .Select(o => o.ValueQuantity ?? 0)
         //         .FirstOrDefaultAsync();
 
         //     return lastBloodPressure;

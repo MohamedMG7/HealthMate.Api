@@ -1,4 +1,4 @@
-using HealthMate.Application.Abstractions.Enums;
+using HealthMate.Domain.Aggregates.Observation;
 
 namespace HealthMate.Application.Observations.Contracts{
 	public class ObservationReadDto

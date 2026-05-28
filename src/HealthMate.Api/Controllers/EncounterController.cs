@@ -4,6 +4,8 @@ using HealthMate.Application.Encounters.Commands;
 using HealthMate.Application.Encounters.Contracts;
 using HealthMate.Application.Manager.ConditionManager;
 using HealthMate.Application.Manager.EncounterManager;
+using HealthMate.Application.Observations.Commands;
+using HealthMate.Application.Observations.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -58,6 +60,30 @@ namespace HealthMate.Api.Controllers
 				ct);
 
 			return Created($"/api/Encounter/{result.EncounterId}", result);
+		}
+
+		[Authorize(Policy = "HealthCareProviderOnly")]
+		[HttpPost("{encounterId:int}/observations")]
+		public async Task<IActionResult> RecordObservation(
+			int encounterId,
+			RecordObservationRequestDto request,
+			CancellationToken ct)
+		{
+			var result = await _dispatcher.DispatchAsync(
+				new RecordObservationCommand(
+					encounterId,
+					request.Category,
+					request.Code,
+					request.CodeDisplayName,
+					request.ValueQuantity,
+					request.ValueUnit,
+					request.Interpretation,
+					request.BodySiteId,
+					request.DateOfObservation,
+					request.NameIdentifier),
+				ct);
+
+			return Created($"/api/Observation/{result.ObservationId}", result);
 		}
 
 		[HttpGet]

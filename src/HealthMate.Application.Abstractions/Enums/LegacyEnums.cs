@@ -32,15 +32,6 @@ public enum Gender
     Female = 1
 }
 
-public enum ObservationCategory
-{
-    Clinical = 0,
-    Laboratory = 1,
-    Procedure = 2,
-    VitalSigns = 3,
-    Other = 4
-}
-
 public enum FeedBack_Category
 {
     Technical_Issue = 0,
