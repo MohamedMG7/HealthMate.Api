@@ -34,15 +34,6 @@ namespace HealthMate.Infrastructure.Enums
 			Female = 1
 		}
 		
-		public enum ObservationCategory
-		{
-			Clinical = 0, // related to clinical findings
-			Laboratory = 1, // related to laboratory
-			Procedure = 2, //related to precedure findings
-			VitalSigns = 3, // heart rate blood pressure
-			Other = 4
-		}
-
 		public enum FeedBack_Category
 		{
 			Technical_Issue = 0,

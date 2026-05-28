@@ -30,6 +30,7 @@ namespace HealthMate.Api.Controllers
 		}
 
 		[HttpPost]
+		[Obsolete("Use POST /api/Encounter/{encounterId}/observations; will be removed after Slice 5.")]
 		public IActionResult AddObservation(ObservationAddDto observation)
 		{
 			_observationManager.AddObservation(observation);
@@ -50,6 +51,7 @@ namespace HealthMate.Api.Controllers
 
 		[HttpDelete]
 		[Route("{id}")]
+		[Obsolete("Legacy observation delete stub; will be removed after Slice 5.")]
 		public ActionResult DeleteEncounterById(int id)
 		{
 			_observationManager.DeleteObservation(id);
