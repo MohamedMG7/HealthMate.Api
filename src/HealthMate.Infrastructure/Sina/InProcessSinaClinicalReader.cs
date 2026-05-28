@@ -1,6 +1,6 @@
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
-using HealthMate.Application.Abstractions.Enums;
+using HealthMate.Domain.Aggregates.Condition;
 using HealthMate.Sina.Ports;
 using HealthMate.Sina.Tools;
 using Microsoft.EntityFrameworkCore;
@@ -26,18 +26,18 @@ public class InProcessSinaClinicalReader : ISinaClinicalReader
             return null;
         }
 
-        var conditions = await context.Conditions
-            .AsNoTracking()
-            .Include(c => c.Disease)
-            .Where(c => c.PaientId == patientId && c.ClinicalStatus == ClinicalStatus.Active)
-            .OrderByDescending(c => c.DateRecorded)
-            .Take(10)
-            .Select(c => new ConditionSummary(
-                c.Condition_Id,
-                $"#C-{c.Condition_Id}",
-                c.Disease.Display_Name,
+        var conditions = await (
+            from c in context.Conditions.AsNoTracking()
+            join d in context.Diseases.AsNoTracking() on c.DiseaseId equals d.Disease_Id
+            where c.PatientId == patientId && c.ClinicalStatus == ClinicalStatus.Active
+            orderby c.DateRecorded descending
+            select new ConditionSummary(
+                c.Id,
+                $"#C-{c.Id}",
+                d.Display_Name,
                 c.Severity.ToString(),
                 c.DateRecorded))
+            .Take(10)
             .ToArrayAsync(ct);
 
         var allergies = await GetActiveAllergiesAsync(patientId, ct);

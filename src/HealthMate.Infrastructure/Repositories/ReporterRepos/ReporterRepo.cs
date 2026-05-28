@@ -1,4 +1,5 @@
 using System.Globalization;
+using HealthMate.Domain.Aggregates.Condition;
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Application.Admin.Contracts;
 using Microsoft.EntityFrameworkCore;
@@ -26,14 +27,20 @@ namespace HealthMate.Infrastructure.Repositories{
                 .ToDictionaryAsync(patient => patient.Id);
 
             var encounterIds = encounters.Select(e => e.Id).ToArray();
-            var conditions = await context.Conditions
-                .AsNoTracking()
-                .Include(condition => condition.BodySite)
-                .Include(condition => condition.Disease)
-                .Where(condition => condition.EncounterId.HasValue && encounterIds.Contains(condition.EncounterId.Value))
+            var conditions = await (
+                from condition in context.Conditions.AsNoTracking()
+                join bodySite in context.BodySites.AsNoTracking()
+                    on EF.Property<int?>(condition, "BodySiteId") equals (int?)bodySite.BodySite_Id into bodySites
+                from bodySite in bodySites.DefaultIfEmpty()
+                where condition.EncounterId.HasValue && encounterIds.Contains(condition.EncounterId.Value)
+                select new ReportConditionRow(
+                    condition.EncounterId!.Value,
+                    condition.Severity,
+                    condition.ClinicalStatus,
+                    bodySite == null ? null : bodySite.DisplayName))
                 .ToListAsync();
             var conditionsByEncounterId = conditions
-                .GroupBy(condition => condition.EncounterId!.Value)
+                .GroupBy(condition => condition.EncounterId)
                 .ToDictionary(group => group.Key, group => group.ToList());
 
             var report = new TrafficReportDto();
@@ -125,12 +132,18 @@ namespace HealthMate.Infrastructure.Repositories{
                 .ToDictionary(g => g.Key, g => g.Count());
 
             report.MostAffectedBodySites = allConditions
-                .Where(c => c.BodySite != null)
-                .GroupBy(c => c.BodySite.DisplayName)
+                .Where(c => c.BodySiteName != null)
+                .GroupBy(c => c.BodySiteName!)
                 .ToDictionary(g => g.Key, g => g.Count());
 
             return report;
 
         }
+
+        private sealed record ReportConditionRow(
+            int EncounterId,
+            Severity Severity,
+            ClinicalStatus ClinicalStatus,
+            string? BodySiteName);
     }
 }

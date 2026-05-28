@@ -6,6 +6,7 @@ using HealthMate.Application.LabTests.Contracts;
 using HealthMate.Application.Documents.Contracts;
 using HealthMate.Application.Prescriptions.Contracts.Medicines;
 using HealthMate.Application.Prescriptions.Contracts;
+using HealthMate.Domain.Aggregates.Condition;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
@@ -92,13 +93,19 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 		public async Task<List<ConditionSummaryReadDto>> getConditionsSummary(int patientId){
 			await using var context = await _contextFactory.CreateDbContextAsync();
 
-			var result = await context.Conditions.Where(p => p.PaientId == patientId).AsNoTracking().OrderByDescending(p => p.DateRecorded).Select(p => new ConditionSummaryReadDto{
-				ConditionId = p.Condition_Id,
-				ConditionName = p.Disease.Display_Name,
-				Date = p.DateRecorded.ToString("yyyy-MM-dd"),
-				Note = p.Note ?? "No Note Added",
-				Severity = p.Severity.ToString(),
-			}).ToListAsync();
+			var result = await (
+				from condition in context.Conditions.AsNoTracking()
+				join disease in context.Diseases.AsNoTracking() on condition.DiseaseId equals disease.Disease_Id
+				where condition.PatientId == patientId
+				orderby condition.DateRecorded descending
+				select new ConditionSummaryReadDto{
+					ConditionId = condition.Id,
+					ConditionName = disease.Display_Name,
+					Date = condition.DateRecorded.ToString("yyyy-MM-dd"),
+					Note = condition.Note ?? "No Note Added",
+					Severity = condition.Severity.ToString(),
+				})
+				.ToListAsync();
 
 			return result;
 		}
@@ -117,8 +124,13 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 					PrescriptionDate = p.PrescriptionDate.ToString("yyyy-MM-dd"),
 					ConditionName = p.EncounterId.HasValue
 						? context.Conditions
-							.Where(condition => condition.EncounterId == p.EncounterId)
-							.Select(condition => condition.Disease.Display_Name)
+							.Join(
+								context.Diseases,
+								condition => condition.DiseaseId,
+								disease => disease.Disease_Id,
+								(condition, disease) => new { condition, disease })
+							.Where(row => row.condition.EncounterId == p.EncounterId)
+							.Select(row => row.disease.Display_Name)
 							.FirstOrDefault() ?? "Unknown"
 						: "Unknown",
 					Publisher = p.Publisher ?? "Unkown"
@@ -137,8 +149,13 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 				EncounterId = p.Id,
 				EncounterDate = p.EndDate.ToString("yyyy-MM-dd"),
 				ConditionName = context.Conditions
-					.Where(condition => condition.EncounterId == p.Id)
-					.Select(condition => condition.Disease.Display_Name)
+					.Join(
+						context.Diseases,
+						condition => condition.DiseaseId,
+						disease => disease.Disease_Id,
+						(condition, disease) => new { condition, disease })
+					.Where(row => row.condition.EncounterId == p.Id)
+					.Select(row => row.disease.Display_Name)
 					.FirstOrDefault() ?? "Unknown"
 			}).ToListAsync();
 
@@ -208,8 +225,13 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 						: p.PrescriptionDate,
 					DiseaseName = p.EncounterId.HasValue
 						? context.Conditions
-							.Where(condition => condition.EncounterId == p.EncounterId)
-							.Select(condition => condition.Disease.Display_Name)
+							.Join(
+								context.Diseases,
+								condition => condition.DiseaseId,
+								disease => disease.Disease_Id,
+								(condition, disease) => new { condition, disease })
+							.Where(row => row.condition.EncounterId == p.EncounterId)
+							.Select(row => row.disease.Display_Name)
 							.FirstOrDefault() ?? "Unknown"
 						: "Unknown",
 					Medicines = p.PatientMedicines.Select(m => new MedicineDetailsReadDto
@@ -273,24 +295,35 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 		{
 			await using var context = await _contextFactory.CreateDbContextAsync();
 
-			var condition = await context.Conditions
-				.Where(c => c.Condition_Id == conditionId)
-				.Select(c => new ConditionDetailsReadDto
+			var condition = await (
+				from c in context.Conditions.AsNoTracking()
+				join disease in context.Diseases.AsNoTracking() on c.DiseaseId equals disease.Disease_Id
+				where c.Id == conditionId
+				select new
 				{
-					DiseaseName = c.Disease.Display_Name,
-					PaientId = c.Patient.Id,
-					DateRecorded = c.DateRecorded.ToString("yyyy-MM-dd HH:mm"),
-					ClinicalStatus = c.ClinicalStatus.ToString(),
-					Recorder = c.Recorder.ToString(),
-					Severity = c.Severity.ToString(),
-					Note = c.Note
+					DiseaseName = disease.Display_Name,
+					c.PatientId,
+					c.DateRecorded,
+					c.ClinicalStatus,
+					Recorder = EF.Property<ConditionRecorder>(c, "Recorder"),
+					c.Severity,
+					c.Note
 				})
 				.FirstOrDefaultAsync();
 
 			if (condition == null)
 				throw new Exception("Condition not found");
 
-			return condition;
+			return new ConditionDetailsReadDto
+			{
+				DiseaseName = condition.DiseaseName,
+				PaientId = condition.PatientId,
+				DateRecorded = condition.DateRecorded.ToString("yyyy-MM-dd HH:mm"),
+				ClinicalStatus = condition.ClinicalStatus.ToString(),
+				Recorder = condition.Recorder.ToString(),
+				Severity = condition.Severity.ToString(),
+				Note = condition.Note
+			};
 		}
 		// Encounter Details
 		public async Task<EncounterDetailsDto> getEncounterDetails(int encounterId)
@@ -324,7 +357,7 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 			var conditionIds = await context.Conditions
 				.AsNoTracking()
 				.Where(condition => condition.EncounterId == encounter.Id)
-				.Select(condition => condition.Condition_Id)
+				.Select(condition => condition.Id)
 				.ToListAsync();
 
 			var medicines = await context.Prescriptions

@@ -1,4 +1,5 @@
 using HealthMate.Application.Abstractions.Enums;
+using HealthMate.Domain.Aggregates.Condition;
 
 namespace HealthMate.Application.Encounters.Contracts{
 	public class EndEncounterConditionAddDto

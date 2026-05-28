@@ -1,5 +1,3 @@
-using HealthMate.Application.Abstractions.Enums;
-
 namespace HealthMate.Application.Conditions.Contracts{
     public class ConditionDetailsReadDto{
         public string DiseaseName { get; set; } = null!;

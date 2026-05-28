@@ -1,22 +1,9 @@
 namespace HealthMate.Application.Abstractions.Enums;
 
-public enum ClinicalStatus
-{
-    Active = 0,
-    Resolved = 1
-}
-
 public enum Recorder
 {
     Patient = 0,
     HealthCareProvider = 1
-}
-
-public enum Severity
-{
-    Severe = 0,
-    Moderate = 1,
-    Mild = 2
 }
 
 public enum UserType

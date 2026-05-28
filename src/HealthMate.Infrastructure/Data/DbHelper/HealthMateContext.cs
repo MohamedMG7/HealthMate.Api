@@ -1,3 +1,4 @@
+using HealthMate.Domain.Aggregates.Condition;
 using HealthMate.Domain.Aggregates.Encounter;
 using HealthMate.Domain.Aggregates.Observation;
 using HealthMate.Domain.Aggregates.Patient;
