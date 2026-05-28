@@ -1,8 +1,9 @@
 using HealthMate.Application.Conditions.Contracts;
-using HealthMate.Application.Patients.Contracts;
-using HealthMate.Infrastructure.Data.Models;
+using HealthMate.Application.Abstractions.Enums;
+using HealthMate.Domain.Aggregates.Condition;
 using HealthMate.Infrastructure.Repositories;
 using HealthMate.Infrastructure.Repositories.ConditionRepos;
+using Microsoft.EntityFrameworkCore;
 
 namespace HealthMate.Application.Manager.ConditionManager
 {
@@ -16,20 +17,7 @@ namespace HealthMate.Application.Manager.ConditionManager
 
 		public void AddCondition(ConditionAddDto condition)
 		{
-			var Condition = new Condition { 
-				BodySiteId = condition.BodySite,
-				Disease_Id = condition.DiseasesId,
-				ClinicalStatus = condition.ClinicalStatus,
-				DateRecorded = condition.DateRecorded,
-				EncounterId = condition.Encounter_Id,
-				Note = condition.Note,
-				Recorder = condition.Recorder,
-				PaientId = condition.Patient_Id,
-				Severity = condition.Severity,
-			};
-
-			_conditionRepo.Add(Condition);
-			_conditionRepo.Save();
+			throw new NotImplementedException("Use POST /api/Encounter/{encounterId}/conditions.");
 		}
 
 		public void DeleteCondition(int conditionId)
@@ -48,17 +36,31 @@ namespace HealthMate.Application.Manager.ConditionManager
 
 		public IEnumerable<ConditionReadDto> GetAllConditions()
 		{
-			var conditions = _conditionRepo.GetAll().ToList();
+			var conditions = _conditionRepo.GetAll()
+				.Select(x => new
+				{
+					x.PatientId,
+					x.FhirId,
+					x.ClinicalStatus,
+					x.Severity,
+					x.DateRecorded,
+					x.Id,
+					BodySiteId = EF.Property<int?>(x, "BodySiteId"),
+					x.EncounterId,
+					x.Note,
+					Recorder = EF.Property<ConditionRecorder>(x, "Recorder")
+				})
+				.ToList();
 
 			var conditionList = conditions.Select(x => new ConditionReadDto
 			{
-				PaientId = x.PaientId,
-				Condition_Fhir_Id = x.Condition_Fhir_Id,
-				Recorder = x.Recorder,
+				PaientId = x.PatientId,
+				Condition_Fhir_Id = x.FhirId,
+				Recorder = (Recorder)(int)x.Recorder,
 				ClinicalStatus = x.ClinicalStatus,
 				Severity = x.Severity,
 				DateRecorded = x.DateRecorded,
-				Condition_Id = x.Condition_Id,
+				Condition_Id = x.Id,
 				BodySiteId = x.BodySiteId,
 				EncounterId = x.EncounterId,
 				Note = x.Note
@@ -69,7 +71,22 @@ namespace HealthMate.Application.Manager.ConditionManager
 
 		public ConditionReadDto GetCondition(int conditionId)
 		{
-			var condition = _conditionRepo.GetById(conditionId);
+			var condition = _conditionRepo.GetAll()
+				.Where(x => x.Id == conditionId)
+				.Select(x => new
+				{
+					x.PatientId,
+					x.FhirId,
+					x.ClinicalStatus,
+					x.Severity,
+					x.DateRecorded,
+					x.Id,
+					BodySiteId = EF.Property<int?>(x, "BodySiteId"),
+					x.EncounterId,
+					x.Note,
+					Recorder = EF.Property<ConditionRecorder>(x, "Recorder")
+				})
+				.FirstOrDefault();
 
 			if (condition == null) {
 				return null;
@@ -77,13 +94,13 @@ namespace HealthMate.Application.Manager.ConditionManager
 
 			ConditionReadDto conditionRead = new ConditionReadDto
 			{
-				PaientId = condition.PaientId,
-				Condition_Fhir_Id = condition.Condition_Fhir_Id,
-				Recorder = condition.Recorder,
+				PaientId = condition.PatientId,
+				Condition_Fhir_Id = condition.FhirId,
+				Recorder = (Recorder)(int)condition.Recorder,
 				ClinicalStatus = condition.ClinicalStatus,
 				Severity = condition.Severity,
 				DateRecorded = condition.DateRecorded,
-				Condition_Id = condition.Condition_Id,
+				Condition_Id = condition.Id,
 				BodySiteId = condition.BodySiteId,
 				EncounterId = condition.EncounterId,
 				Note = condition.Note

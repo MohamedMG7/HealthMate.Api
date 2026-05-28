@@ -32,6 +32,7 @@ namespace HealthMate.Api.Controllers
 
 		[Authorize(policy:"PatientOrHealthCareProvider")]
 		[HttpPost]
+		[Obsolete("Use POST /api/Encounter/{encounterId}/conditions; will be removed after Slice 5.")]
 		public IActionResult AddCondition(ConditionAddDto condition) { 
 			_conditionManager.AddCondition(condition);	
 			return Ok("Added Succesfully");

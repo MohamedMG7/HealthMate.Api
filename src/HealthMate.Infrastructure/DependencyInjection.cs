@@ -20,6 +20,7 @@ using HealthMate.Application.Manager.PatientManager;
 using HealthMate.Application.Managers;
 using HealthMate.Application.Patients.Services;
 using HealthMate.Application.Prescriptions.Contracts.Medicines;
+using HealthMate.Domain.Aggregates.Condition;
 using HealthMate.Domain.Aggregates.Encounter;
 using HealthMate.Domain.Aggregates.Observation;
 using HealthMate.Domain.Aggregates.Patient;
@@ -131,6 +132,7 @@ public static class DependencyInjection
         services.AddScoped<IGenericRepository<MedicalImage>, GenericRepository<MedicalImage>>();
         services.AddScoped<IGenericRepository<Observation>, GenericRepository<Observation>>();
         services.AddScoped<IGenericRepository<Prescription>, GenericRepository<Prescription>>();
+        services.AddScoped<IConditionRepository, EfConditionRepository>();
         services.AddScoped<IEncounterRepository, EfEncounterRepository>();
         services.AddScoped<IObservationRepository, EfObservationRepository>();
         services.AddScoped<IPatientRepository, EfPatientRepository>();

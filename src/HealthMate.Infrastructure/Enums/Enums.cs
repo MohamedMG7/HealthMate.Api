@@ -1,24 +1,10 @@
 namespace HealthMate.Infrastructure.Enums
 {
 	
-		//terminology.hl7.org/6.0.2/CodeSystem-condition-clinical.html code system
-		public enum ClinicalStatus
-		{
-			Active = 0, // still ongoing
-			Resolved = 1 //not any more a concern
-		}
-
 		public enum Recorder
 		{
 			Patient = 0,
 			HealthCareProvider = 1
-		}
-
-		public enum Severity
-		{
-			Severe = 0,
-			Moderate = 1,
-			Mild = 2
 		}
 
 		public enum UserType

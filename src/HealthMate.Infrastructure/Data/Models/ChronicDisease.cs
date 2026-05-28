@@ -1,3 +1,5 @@
+using HealthMate.Domain.Aggregates.Condition;
+
 namespace HealthMate.Infrastructure.Data.Models
 {
 	public class ChronicDisease

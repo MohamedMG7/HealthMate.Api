@@ -8,8 +8,6 @@ namespace HealthMate.Infrastructure.Data.Models
         public string Scientific_Name { get; set; }
         public string Display_Name { get; set; }
         public string Code { get; set; }
-        public string ICD11_Code { get; set; } // this will store the ICD code for maintaining
-
-		public ICollection<Condition> Conditions { get; set; } = new HashSet<Condition>();
+		public string ICD11_Code { get; set; } // this will store the ICD code for maintaining
 	}
 }

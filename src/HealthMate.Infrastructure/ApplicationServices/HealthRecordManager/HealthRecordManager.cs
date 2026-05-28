@@ -11,6 +11,7 @@ using HealthMate.Application.Documents.Contracts;
 using HealthMate.Application.LabTests.Contracts;
 using HealthMate.Application.Manager.UtilityManager;
 using HealthMate.Application.Abstractions.Enums;
+using HealthMate.Domain.Aggregates.Condition;
 using HealthMate.Domain.Aggregates.Encounter;
 using HealthMate.Domain.Aggregates.Observation;
 using HealthMate.Infrastructure.Data.DbHelper;
@@ -35,10 +36,28 @@ namespace HealthMate.Application.Manager.HealthRecordManager
 
 		public async Task<HealthRecordsReadDto> GetAllHealthRecords(int patientId)
 		{
-			var encounters = _encounterRepo.GetAll().Where(p => p.PatientId == patientId).ToList();
-			var conditions = _conditionRepo.GetAll().Include(sc => sc.Disease).Where(p => p.PaientId == patientId).ToList();
-			var observations = _observationRepo.GetAll().Where(p => p.PatientId == patientId).ToList();
 			var context = (HealthMateContext)_observationRepo.GetContext();
+			var encounters = _encounterRepo.GetAll().Where(p => p.PatientId == patientId).ToList();
+			var conditions = (
+				from condition in _conditionRepo.GetAll()
+				join disease in context.Diseases on condition.DiseaseId equals disease.Disease_Id
+				where condition.PatientId == patientId
+				select new
+				{
+					condition.PatientId,
+					condition.FhirId,
+					Recorder = EF.Property<ConditionRecorder>(condition, "Recorder"),
+					condition.ClinicalStatus,
+					condition.Severity,
+					condition.DateRecorded,
+					condition.Id,
+					BodySiteId = EF.Property<int?>(condition, "BodySiteId"),
+					condition.EncounterId,
+					DiseaseName = disease.Display_Name,
+					condition.Note
+				})
+				.ToList();
+			var observations = _observationRepo.GetAll().Where(p => p.PatientId == patientId).ToList();
 			var patientIds = observations
 				.Select(o => o.PatientId)
 				.Distinct()
@@ -80,16 +99,16 @@ namespace HealthMate.Application.Manager.HealthRecordManager
 
 			var conditionList = conditions.Select(x => new ConditionReadDto
 			{
-				PaientId = x.PaientId,
-				Condition_Fhir_Id = x.Condition_Fhir_Id,
-				Recorder = x.Recorder,
+				PaientId = x.PatientId,
+				Condition_Fhir_Id = x.FhirId,
+				Recorder = (Recorder)(int)x.Recorder,
 				ClinicalStatus = x.ClinicalStatus,
 				Severity = x.Severity,
 				DateRecorded = x.DateRecorded,
-				Condition_Id = x.Condition_Id,
+				Condition_Id = x.Id,
 				BodySiteId = x.BodySiteId,
 				EncounterId = x.EncounterId,
-				DiseaseName = x.Disease.Display_Name,
+				DiseaseName = x.DiseaseName,
 				Note = x.Note
 			});
 

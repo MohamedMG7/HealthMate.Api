@@ -1,6 +1,6 @@
 using HealthMate.Infrastructure.Data.DbHelper;
-using HealthMate.Infrastructure.Data.Models;
 using HealthMate.Application.Conditions.Contracts;
+using HealthMate.Domain.Aggregates.Condition;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthMate.Infrastructure.Repositories.ConditionRepos{
@@ -17,11 +17,19 @@ namespace HealthMate.Infrastructure.Repositories.ConditionRepos{
         {
             await using var context = await _contextFactory.CreateDbContextAsync();
             
-            var conditions = await context.Conditions
-                .Include(c => c.Disease)
-                .Where(c => c.PaientId == patientId)
-                .OrderByDescending(c => c.Severity)
-                .ThenByDescending(c => c.DateRecorded)
+            var conditions = await (
+                from condition in context.Conditions.AsNoTracking()
+                join disease in context.Diseases.AsNoTracking() on condition.DiseaseId equals disease.Disease_Id
+                where condition.PatientId == patientId
+                orderby condition.Severity descending, condition.DateRecorded descending
+                select new
+                {
+                    disease.Code,
+                    disease.Display_Name,
+                    condition.DateRecorded,
+                    condition.Note,
+                    IsOngoing = EF.Property<bool>(condition, "IsOngoing")
+                })
                 .ToListAsync();
 
             if (!conditions.Any())
@@ -36,18 +44,18 @@ namespace HealthMate.Infrastructure.Repositories.ConditionRepos{
                 };
             }
 
-            var ongoingCondition = conditions.FirstOrDefault(c => c.isOngoing);
+            var ongoingCondition = conditions.FirstOrDefault(c => c.IsOngoing);
             var mostSevereCondition = conditions.First();
 
             var selectedCondition = ongoingCondition ?? mostSevereCondition;
 
             return new PatientDashboardConditionReadDto
             {
-                ConditionCode = selectedCondition.Disease.Code,
-                ConditionName = selectedCondition.Disease.Display_Name,
+                ConditionCode = selectedCondition.Code,
+                ConditionName = selectedCondition.Display_Name,
                 ConditionDate = selectedCondition.DateRecorded.ToString("yyyy-MM-dd"),
                 Treatement = selectedCondition.Note ?? "No treatment specified",
-                IsOngoing = selectedCondition.isOngoing
+                IsOngoing = selectedCondition.IsOngoing
             };
         }
     }

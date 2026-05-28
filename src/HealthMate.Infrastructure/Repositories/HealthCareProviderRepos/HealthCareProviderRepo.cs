@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using HealthMate.Application.Encounters.Contracts;
+using HealthMate.Domain.Aggregates.Condition;
 using HealthMate.Domain.Aggregates.Encounter;
 using HealthMate.Domain.Aggregates.Observation;
 using HealthMate.Domain.Aggregates.Patient.ValueObjects;
@@ -114,14 +115,15 @@ namespace HealthMate.Infrastructure.Repositories.HealthCareProviderRepos
 				.ToDictionaryAsync(patient => patient.Id);
 
 			var rawEncounterIds = rawData.Select(data => data.EncounterId).ToArray();
-			var diagnosesByEncounterId = await context.Conditions
-				.Where(condition => condition.EncounterId.HasValue && rawEncounterIds.Contains(condition.EncounterId.Value))
-				.Include(condition => condition.Disease)
-				.GroupBy(condition => condition.EncounterId!.Value)
-				.Select(group => new
+			var diagnosesByEncounterId = await (
+				from condition in context.Conditions.AsNoTracking()
+				join disease in context.Diseases.AsNoTracking() on condition.DiseaseId equals disease.Disease_Id
+				where condition.EncounterId.HasValue && rawEncounterIds.Contains(condition.EncounterId.Value)
+				group disease.Display_Name by condition.EncounterId!.Value into groupByEncounter
+				select new
 				{
-					EncounterId = group.Key,
-					Diagnosis = group.Select(condition => condition.Disease.Display_Name).FirstOrDefault()
+					EncounterId = groupByEncounter.Key,
+					Diagnosis = groupByEncounter.FirstOrDefault()
 				})
 				.ToDictionaryAsync(item => item.EncounterId, item => item.Diagnosis ?? "Unknown");
 
@@ -190,17 +192,15 @@ namespace HealthMate.Infrastructure.Repositories.HealthCareProviderRepos
 		#region End Encounter Functionality
 		private async Task CreateCondition(EndEncounterConditionAddDto conditionDto, int encounterId, int patientId)
 		{
-			var condition = new Condition
-			{
-				EncounterId = encounterId,
-				Disease_Id = conditionDto.DiseasesId,
-				ClinicalStatus = conditionDto.ClinicalStatus,
-				DateRecorded = conditionDto.DateRecorded,
-				PaientId = patientId,
-				Severity = conditionDto.Severity,
-				BodySiteId = conditionDto.BodySite,
-				Note = conditionDto.Note
-			};
+			var condition = Condition.Record(
+				patientId,
+				encounterId,
+				conditionDto.DiseasesId,
+				conditionDto.Severity,
+				conditionDto.ClinicalStatus,
+				conditionDto.DateRecorded,
+				conditionDto.Note,
+				_clock);
 
 			await _context.Conditions.AddAsync(condition);
 		}
@@ -395,17 +395,19 @@ namespace HealthMate.Infrastructure.Repositories.HealthCareProviderRepos
 		{
 			await using var context = await _contextFactory.CreateDbContextAsync();
 			
-			var topConditions = await context.Conditions
-				.Where(condition => condition.EncounterId.HasValue && context.Encounters
-					.Any(encounter => encounter.Id == condition.EncounterId.Value && encounter.HealthCareProviderId == healthCareProviderId))
-				.GroupBy(c => c.Disease.Display_Name)
-				.OrderByDescending(g => g.Count())
-				.Take(5)
-				.Select(g => new ConditionFrequencyDto
-				{ 
-					ConditionName = g.Key, 
-					Frequency = g.Count() 
+			var topConditions = await (
+				from condition in context.Conditions.AsNoTracking()
+				join disease in context.Diseases.AsNoTracking() on condition.DiseaseId equals disease.Disease_Id
+				where condition.EncounterId.HasValue && context.Encounters
+					.Any(encounter => encounter.Id == condition.EncounterId.Value && encounter.HealthCareProviderId == healthCareProviderId)
+				group disease.Display_Name by disease.Display_Name into groupByDisease
+				orderby groupByDisease.Count() descending
+				select new ConditionFrequencyDto
+				{
+					ConditionName = groupByDisease.Key,
+					Frequency = groupByDisease.Count()
 				})
+				.Take(5)
 				.ToListAsync();
 
 			return topConditions;

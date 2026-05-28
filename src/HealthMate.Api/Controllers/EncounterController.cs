@@ -1,4 +1,5 @@
 using HealthMate.Application.Conditions.Contracts;
+using HealthMate.Application.Conditions.Commands;
 using HealthMate.Application.Common;
 using HealthMate.Application.Encounters.Commands;
 using HealthMate.Application.Encounters.Contracts;
@@ -84,6 +85,26 @@ namespace HealthMate.Api.Controllers
 				ct);
 
 			return Created($"/api/Observation/{result.ObservationId}", result);
+		}
+
+		[Authorize(Policy = "HealthCareProviderOnly")]
+		[HttpPost("{encounterId:int}/conditions")]
+		public async Task<IActionResult> RecordCondition(
+			int encounterId,
+			RecordConditionRequestDto request,
+			CancellationToken ct)
+		{
+			var result = await _dispatcher.DispatchAsync(
+				new RecordConditionCommand(
+					encounterId,
+					request.DiseaseId,
+					request.Severity,
+					request.ClinicalStatus,
+					request.DateRecorded,
+					request.Note),
+				ct);
+
+			return Created($"/api/Condition/{result.ConditionId}", result);
 		}
 
 		[HttpGet]
