@@ -1,13 +1,12 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using HealthMate.Application.Encounters.Contracts;
+using HealthMate.Domain.Aggregates.Encounter;
 using HealthMate.Domain.Aggregates.Patient.ValueObjects;
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
 using HealthMate.Application.Conditions.Contracts;
 using HealthMate.Application.Documents.Contracts;
-using HealthMate.Application.Encounters.Contracts;
-using HealthMate.Application.Encounters.Contracts;
 using HealthMate.Application.Providers.Contracts;
 using HealthMate.Application.LabTests.Contracts;
 using HealthMate.Application.Prescriptions.Contracts;
@@ -93,16 +92,37 @@ namespace HealthMate.Infrastructure.Repositories.HealthCareProviderRepos
 				.OrderByDescending(e => e.EndDate)
 				.Select(e => new
 				{
-					PatientUserId = e.Patient.ApplicationUserId,
-					PatientNationalId = e.Patient.NationalId,
-					EncounterId = e.Encounter_Id,
+					PatientId = e.PatientId,
+					EncounterId = e.Id,
 					EncounterDate = e.EndDate,
-					Diagnosis = e.Conditions.FirstOrDefault()!.Disease.Display_Name
 				})
 				.ToListAsync();
 
+			var rawPatientIds = rawData.Select(data => data.PatientId).Distinct().ToArray();
+			var patientsById = await context.Patients
+				.Where(patient => rawPatientIds.Contains(patient.Id))
+				.Select(patient => new
+				{
+					patient.Id,
+					patient.ApplicationUserId,
+					patient.NationalId
+				})
+				.ToDictionaryAsync(patient => patient.Id);
+
+			var rawEncounterIds = rawData.Select(data => data.EncounterId).ToArray();
+			var diagnosesByEncounterId = await context.Conditions
+				.Where(condition => condition.EncounterId.HasValue && rawEncounterIds.Contains(condition.EncounterId.Value))
+				.Include(condition => condition.Disease)
+				.GroupBy(condition => condition.EncounterId!.Value)
+				.Select(group => new
+				{
+					EncounterId = group.Key,
+					Diagnosis = group.Select(condition => condition.Disease.Display_Name).FirstOrDefault()
+				})
+				.ToDictionaryAsync(item => item.EncounterId, item => item.Diagnosis ?? "Unknown");
+
 			var patientUserIds = rawData
-				.Select(data => data.PatientUserId)
+				.Select(data => patientsById.GetValueOrDefault(data.PatientId)?.ApplicationUserId)
 				.Where(static id => !string.IsNullOrWhiteSpace(id))
 				.Distinct()
 				.ToArray();
@@ -114,12 +134,12 @@ namespace HealthMate.Infrastructure.Repositories.HealthCareProviderRepos
 			var encounterSummaries = rawData.Select(data => new EncounterTableSummaryReadDto
 			{
 				EncounterId = data.EncounterId,
-				Patient_Name = data.PatientUserId is not null && patientUsers.TryGetValue(data.PatientUserId, out var user)
+				Patient_Name = patientsById.GetValueOrDefault(data.PatientId)?.ApplicationUserId is { } patientUserId && patientUsers.TryGetValue(patientUserId, out var user)
 					? user.First_Name + " " + user.Last_Name
 					: "No Data",
-				Patient_Id = data.PatientNationalId.Value,
+				Patient_Id = patientsById.GetValueOrDefault(data.PatientId)?.NationalId.Value ?? "No Data",
 				EncounterDate = DateOnly.FromDateTime(data.EncounterDate),
-				Diagnosis = data.Diagnosis
+				Diagnosis = diagnosesByEncounterId.GetValueOrDefault(data.EncounterId, "Unknown")
 			});
 
 			return encounterSummaries;
@@ -148,22 +168,19 @@ namespace HealthMate.Infrastructure.Repositories.HealthCareProviderRepos
 			var encounterLocation = await _context.HealthCareProviders.Where(h => h.HealthCareProvider_Id == HealthCareProvider).Select(h => h.City + " / " + h.Street).AsNoTracking()
 				.FirstOrDefaultAsync() ?? "NO DATA";
 
-			var encounter = new Encounter
-			{
-				PatientId = PatientId,
-				HealthCareProviderId = HealthCareProvider,
-				StartDate = encounterData.StartDate,
-				EndDate = encounterData.EndDate,
-				Location = encounterLocation,
-				Reason_To_Visit = encounterData.Reason_To_Visit,
-				Treatment_Plan = encounterData.Treatment_Plan,
-				Note = encounterData.Note,
-				isDeleted = false
-			};
+			var encounter = Encounter.CreateLegacy(
+				PatientId,
+				HealthCareProvider,
+				encounterData.StartDate,
+				encounterData.EndDate,
+				encounterLocation,
+				encounterData.Reason_To_Visit,
+				encounterData.Treatment_Plan,
+				encounterData.Note);
 
 			await _context.Encounters.AddAsync(encounter);
 			await _context.SaveChangesAsync();
-			return encounter.Encounter_Id;
+			return encounter.Id;
 		}
 
 		#region End Encounter Functionality
@@ -373,9 +390,9 @@ namespace HealthMate.Infrastructure.Repositories.HealthCareProviderRepos
 		{
 			await using var context = await _contextFactory.CreateDbContextAsync();
 			
-			var topConditions = await context.Encounters
-				.Where(e => e.HealthCareProviderId == healthCareProviderId)
-				.SelectMany(e => e.Conditions)
+			var topConditions = await context.Conditions
+				.Where(condition => condition.EncounterId.HasValue && context.Encounters
+					.Any(encounter => encounter.Id == condition.EncounterId.Value && encounter.HealthCareProviderId == healthCareProviderId))
 				.GroupBy(c => c.Disease.Display_Name)
 				.OrderByDescending(g => g.Count())
 				.Take(5)

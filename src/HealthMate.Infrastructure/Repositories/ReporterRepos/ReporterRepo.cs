@@ -15,16 +15,36 @@ namespace HealthMate.Infrastructure.Repositories{
             using var context = await _contextFactory.CreateDbContextAsync();
 
             var encounters = await context.Encounters
-                .Include(e => e.Patient)
-                .Include(e => e.Conditions)
-                    .ThenInclude(c => c.BodySite)
-                .Where(e => e.HealthCareProviderId == healthCareProviderId && !e.isDeleted)
+                .AsNoTracking()
+                .Where(e => e.HealthCareProviderId == healthCareProviderId && !e.IsDeleted)
                 .ToListAsync();
+
+            var patientIds = encounters.Select(e => e.PatientId).Distinct().ToArray();
+            var patientsById = await context.Patients
+                .AsNoTracking()
+                .Where(patient => patientIds.Contains(patient.Id))
+                .ToDictionaryAsync(patient => patient.Id);
+
+            var encounterIds = encounters.Select(e => e.Id).ToArray();
+            var conditions = await context.Conditions
+                .AsNoTracking()
+                .Include(condition => condition.BodySite)
+                .Include(condition => condition.Disease)
+                .Where(condition => condition.EncounterId.HasValue && encounterIds.Contains(condition.EncounterId.Value))
+                .ToListAsync();
+            var conditionsByEncounterId = conditions
+                .GroupBy(condition => condition.EncounterId!.Value)
+                .ToDictionary(group => group.Key, group => group.ToList());
 
             var report = new TrafficReportDto();
 
             // 1. Patient Overview
-            var distinctPatients = encounters.Select(e => e.Patient).DistinctBy(p => p.Id).ToList();
+            var distinctPatients = encounters
+                .Select(e => patientsById.GetValueOrDefault(e.PatientId))
+                .Where(patient => patient is not null)
+                .DistinctBy(patient => patient!.Id)
+                .Select(patient => patient!)
+                .ToList();
             report.TotalPatients = distinctPatients.Count;
 
             report.NewPatientsPerYear = distinctPatients
@@ -81,18 +101,20 @@ namespace HealthMate.Infrastructure.Repositories{
                 encounters.Average(e => (e.EndDate - e.StartDate).TotalMinutes),2);
 
             report.MostCommonVisitReasons = encounters
-                .GroupBy(e => e.Reason_To_Visit)
+                .GroupBy(e => e.ReasonToVisit.Value)
                 .OrderByDescending(g => g.Count())
                 .Take(5)
                 .Select(g => g.Key)
                 .ToList();
 
-            report.AverageConditionsPerEncounter = encounters
-                .Where(e => e.Conditions.Any())
-                .Average(e => e.Conditions.Count);
+            var conditionCounts = encounters
+                .Select(e => conditionsByEncounterId.TryGetValue(e.Id, out var encounterConditions) ? encounterConditions.Count : 0)
+                .Where(count => count > 0)
+                .ToArray();
+            report.AverageConditionsPerEncounter = conditionCounts.Length == 0 ? 0 : conditionCounts.Average();
 
             // 3. Condition & Disease Insights
-            var allConditions = encounters.SelectMany(e => e.Conditions).ToList();
+            var allConditions = conditions;
 
             report.SeverityDistribution = allConditions
                 .GroupBy(c => c.Severity.ToString())

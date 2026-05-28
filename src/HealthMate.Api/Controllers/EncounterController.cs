@@ -1,4 +1,6 @@
 using HealthMate.Application.Conditions.Contracts;
+using HealthMate.Application.Common;
+using HealthMate.Application.Encounters.Commands;
 using HealthMate.Application.Encounters.Contracts;
 using HealthMate.Application.Manager.ConditionManager;
 using HealthMate.Application.Manager.EncounterManager;
@@ -13,9 +15,11 @@ namespace HealthMate.Api.Controllers
 	[ApiController]
 	public class EncounterController : ControllerBase
 	{
+		private readonly IHandlerDispatcher _dispatcher;
 		private readonly IEncounterManager _encounterManager;
-		public EncounterController(IEncounterManager encounterManager)
+		public EncounterController(IHandlerDispatcher dispatcher, IEncounterManager encounterManager)
 		{
+			_dispatcher = dispatcher;
 			_encounterManager = encounterManager;
 		}
 
@@ -33,10 +37,27 @@ namespace HealthMate.Api.Controllers
 		}
 
 		[HttpPost]
+		[Obsolete("Use POST /api/Encounter/start; will be removed after Slice 5.")]
 		public IActionResult AddEncounter(EncounterAddDto encounter)
 		{
 			_encounterManager.AddEncounter(encounter);
 			return Ok("Added Succesfully");
+		}
+
+		[Authorize(Policy = "HealthCareProviderOnly")]
+		[HttpPost("start")]
+		public async Task<IActionResult> StartEncounter(
+			StartEncounterRequestDto request,
+			CancellationToken ct)
+		{
+			var result = await _dispatcher.DispatchAsync(
+				new StartEncounterCommand(
+					request.PatientId,
+					request.HealthCareProviderId,
+					request.ReasonToVisit),
+				ct);
+
+			return Created($"/api/Encounter/{result.EncounterId}", result);
 		}
 
 		[HttpGet]

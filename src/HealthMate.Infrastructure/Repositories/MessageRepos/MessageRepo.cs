@@ -100,18 +100,26 @@ namespace HealthMate.Infrastructure.Repositories.MessageRepos
 
             if (user.UserType == UserType.Patient)
             {
-                // Step 3: Find patient encounters using raw query approach
-                var encounters = await _context.Encounters
-                    .Include(e => e.Patient)
-                    .Include(e => e.HealthCareProvider)
-                        .ThenInclude(h => h.ApplicationUser)
-                    .Where(e => e.Patient.ApplicationUserId == userId)
+                var patientId = await _context.Patients
+                    .Where(patient => patient.ApplicationUserId == userId)
+                    .Select(patient => patient.Id)
+                    .FirstOrDefaultAsync();
+
+                var providerIds = await _context.Encounters
+                    .Where(encounter => encounter.PatientId == patientId)
+                    .Select(encounter => encounter.HealthCareProviderId)
+                    .Distinct()
+                    .ToArrayAsync();
+
+                Console.WriteLine($"Found {providerIds.Length} encounters for patient");
+
+                var providers = await _context.HealthCareProviders
+                    .Include(provider => provider.ApplicationUser)
+                    .Where(provider => providerIds.Contains(provider.HealthCareProvider_Id))
                     .ToListAsync();
 
-                Console.WriteLine($"Found {encounters.Count} encounters for patient");
-
-                var result = encounters
-                    .Select(e => (e.HealthCareProvider.ApplicationUser, (string?)null))
+                var result = providers
+                    .Select(provider => (provider.ApplicationUser, (string?)null))
                     .Distinct()
                     .ToList();
 
@@ -121,17 +129,25 @@ namespace HealthMate.Infrastructure.Repositories.MessageRepos
 
             if (user.UserType == UserType.HealthCareProvider)
             {
-                // Step 3: Find healthcare provider encounters
-                var encounters = await _context.Encounters
-                    .Include(e => e.Patient)
-                    .Include(e => e.HealthCareProvider)
-                    .Where(e => e.HealthCareProvider.ApplicationUserId == userId)
+                var providerId = await _context.HealthCareProviders
+                    .Where(provider => provider.ApplicationUserId == userId)
+                    .Select(provider => provider.HealthCareProvider_Id)
+                    .FirstOrDefaultAsync();
+
+                var patientIds = await _context.Encounters
+                    .Where(encounter => encounter.HealthCareProviderId == providerId)
+                    .Select(encounter => encounter.PatientId)
+                    .Distinct()
+                    .ToArrayAsync();
+
+                Console.WriteLine($"Found {patientIds.Length} encounters for healthcare provider");
+
+                var patients = await _context.Patients
+                    .Where(patient => patientIds.Contains(patient.Id))
                     .ToListAsync();
 
-                Console.WriteLine($"Found {encounters.Count} encounters for healthcare provider");
-
-                var patientUserIds = encounters
-                    .Select(e => e.Patient.ApplicationUserId)
+                var patientUserIds = patients
+                    .Select(patient => patient.ApplicationUserId)
                     .Where(static id => !string.IsNullOrWhiteSpace(id))
                     .Distinct()
                     .ToArray();
@@ -139,9 +155,9 @@ namespace HealthMate.Infrastructure.Repositories.MessageRepos
                     .Where(u => patientUserIds.Contains(u.Id))
                     .ToDictionaryAsync(u => u.Id);
 
-                var result = encounters
-                    .Where(e => e.Patient.ApplicationUserId is not null && patientUsers.ContainsKey(e.Patient.ApplicationUserId))
-                    .Select(e => (patientUsers[e.Patient.ApplicationUserId!], (string?)e.Patient.NationalId.Value))
+                var result = patients
+                    .Where(patient => patient.ApplicationUserId is not null && patientUsers.ContainsKey(patient.ApplicationUserId))
+                    .Select(patient => (patientUsers[patient.ApplicationUserId!], (string?)patient.NationalId.Value))
                     .Distinct()
                     .ToList();
 

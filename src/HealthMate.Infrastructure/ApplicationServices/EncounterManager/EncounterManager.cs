@@ -1,6 +1,6 @@
 using HealthMate.Application.Conditions.Contracts;
 using HealthMate.Application.Encounters.Contracts;
-using HealthMate.Infrastructure.Data.Models;
+using HealthMate.Domain.Aggregates.Encounter;
 using HealthMate.Infrastructure.Repositories;
 using System.Diagnostics.Metrics;
 
@@ -14,20 +14,20 @@ namespace HealthMate.Application.Manager.EncounterManager
 			_encounterRepo = encounterRepo;
         }
 
+		[Obsolete("Use POST /api/Encounter/start; will be removed after Slice 5.")]
 		public void AddEncounter(EncounterAddDto encounter)
 		{
-			var Encounter = new Encounter { 
-				HealthCareProviderId = encounter.HealthcareProvider_Id,
-				PatientId = encounter.Patient_Id,
-				Location = encounter.Location,
-				Reason_To_Visit = encounter.Reason_To_Visit,
-				Note = encounter.Note,
-				StartDate = encounter.StartDate,
-				EndDate = encounter.EndDate,
-				Treatment_Plan = encounter.Treatment_Plan,
-			};
+			var encounterEntity = Encounter.CreateLegacy(
+				encounter.Patient_Id,
+				encounter.HealthcareProvider_Id,
+				encounter.StartDate,
+				encounter.EndDate,
+				encounter.Location,
+				encounter.Reason_To_Visit,
+				encounter.Treatment_Plan,
+				encounter.Note);
 
-			_encounterRepo.Add(Encounter);
+			_encounterRepo.Add(encounterEntity);
 			_encounterRepo.Save();
 		}
 
@@ -42,16 +42,16 @@ namespace HealthMate.Application.Manager.EncounterManager
 
 			var encounterList = encounters.Select(x => new EncounterReadDto
 			{
-				Encounter_Id = x.Encounter_Id,
+				Encounter_Id = x.Id,
 				Patient_Id = x.PatientId,
-				Encounter_Fhir_Id = x.Encounter_Fhir_Id,
+				Encounter_Fhir_Id = x.FhirId,
 				HealthcareProvider_Id = x.HealthCareProviderId,
-				isDeleted = x.isDeleted,
-				Reason_To_Visit = x.Reason_To_Visit,
+				isDeleted = x.IsDeleted,
+				Reason_To_Visit = x.ReasonToVisit.Value,
 				StartDate = x.StartDate,
 				EndDate = x.EndDate,
 				Location = x.Location,
-				Treatment_Plan = x.Treatment_Plan,
+				Treatment_Plan = x.TreatmentPlan,
 				Note = x.Note
 			});
 
@@ -69,16 +69,16 @@ namespace HealthMate.Application.Manager.EncounterManager
 
 			EncounterReadDto encounterRead = new EncounterReadDto
 			{
-				Encounter_Id = encounter.Encounter_Id,
+				Encounter_Id = encounter.Id,
 				Patient_Id = encounter.PatientId,
-				Encounter_Fhir_Id = encounter.Encounter_Fhir_Id,
+				Encounter_Fhir_Id = encounter.FhirId,
 				HealthcareProvider_Id = encounter.HealthCareProviderId,
-				isDeleted = encounter.isDeleted,
-				Reason_To_Visit = encounter.Reason_To_Visit,
+				isDeleted = encounter.IsDeleted,
+				Reason_To_Visit = encounter.ReasonToVisit.Value,
 				StartDate = encounter.StartDate,
 				EndDate = encounter.EndDate,
 				Location = encounter.Location,
-				Treatment_Plan = encounter.Treatment_Plan,
+				Treatment_Plan = encounter.TreatmentPlan,
 				Note = encounter.Note
 			};
 			return encounterRead;

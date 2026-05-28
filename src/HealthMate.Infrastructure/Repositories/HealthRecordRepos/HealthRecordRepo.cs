@@ -115,11 +115,12 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 				{
 					PrescriptionId = p.PrescriptionId,
 					PrescriptionDate = p.PrescriptionDate.ToString("yyyy-MM-dd"),
-					ConditionName = p.Encounter != null 
-						? p.Encounter.Conditions
-							.Select(c => c.Disease.Display_Name)
+					ConditionName = p.EncounterId.HasValue
+						? context.Conditions
+							.Where(condition => condition.EncounterId == p.EncounterId)
+							.Select(condition => condition.Disease.Display_Name)
 							.FirstOrDefault() ?? "Unknown"
-						: "Unknown", 
+						: "Unknown",
 					Publisher = p.Publisher ?? "Unkown"
 				})
 				.ToListAsync();
@@ -133,11 +134,12 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 
 			var result = await context.Encounters.Where(p => p.PatientId == patientId).AsNoTracking().OrderByDescending(p => p.EndDate)
 			.Select(p => new EncounterSumaryReadDto{
-				EncounterId = p.Encounter_Id,
+				EncounterId = p.Id,
 				EncounterDate = p.EndDate.ToString("yyyy-MM-dd"),
-				ConditionName = p.Conditions.FirstOrDefault() != null 
-                ? p.Conditions.FirstOrDefault().Disease.Display_Name 
-                : "Unknown"
+				ConditionName = context.Conditions
+					.Where(condition => condition.EncounterId == p.Id)
+					.Select(condition => condition.Disease.Display_Name)
+					.FirstOrDefault() ?? "Unknown"
 			}).ToListAsync();
 
 			return result;
@@ -190,11 +192,25 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 				.AsNoTracking()
 				.Select(p => new
 				{
-					PatientNationalId = p.Encounter.Patient.NationalId,
-					PatientUserId = p.Encounter.Patient.ApplicationUserId,
-					PrescriptionDate = p.Encounter.EndDate.ToString("yyyy-MM-dd"),
-					DiseaseName = p.Encounter.Conditions.FirstOrDefault() != null 
-						? p.Encounter.Conditions.FirstOrDefault().Disease.Display_Name 
+					PatientNationalId = context.Patients
+						.Where(patient => patient.Id == p.PatientId)
+						.Select(patient => patient.NationalId)
+						.FirstOrDefault(),
+					PatientUserId = context.Patients
+						.Where(patient => patient.Id == p.PatientId)
+						.Select(patient => patient.ApplicationUserId)
+						.FirstOrDefault(),
+					PrescriptionDate = p.EncounterId.HasValue
+						? context.Encounters
+							.Where(encounter => encounter.Id == p.EncounterId.Value)
+							.Select(encounter => encounter.EndDate)
+							.FirstOrDefault()
+						: p.PrescriptionDate,
+					DiseaseName = p.EncounterId.HasValue
+						? context.Conditions
+							.Where(condition => condition.EncounterId == p.EncounterId)
+							.Select(condition => condition.Disease.Display_Name)
+							.FirstOrDefault() ?? "Unknown"
 						: "Unknown",
 					Medicines = p.PatientMedicines.Select(m => new MedicineDetailsReadDto
 					{
@@ -212,7 +228,7 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 				{
 					PatientNationalId = result.PatientNationalId.Value,
 					PatientName = await GetUserFullNameAsync(context, result.PatientUserId),
-					PrescriptionDate = result.PrescriptionDate,
+					PrescriptionDate = result.PrescriptionDate.ToString("yyyy-MM-dd"),
 					DiseaseName = result.DiseaseName,
 					Medicines = result.Medicines
 				};
@@ -282,37 +298,50 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 			await using var context = await _contextFactory.CreateDbContextAsync();
 
 			var encounter = await context.Encounters
-				.Where(e => e.Encounter_Id == encounterId)
 				.AsNoTracking()
-				.Select(e => new 
-				{
-					patientId = e.Patient.Id,
-					PatientNationalId = e.Patient.NationalId,
-					PatientUserId = e.Patient.ApplicationUserId,
-					HealthCareProvidersName = e.HealthCareProvider.ApplicationUser.FullName,
-					EncounterDate = e.StartDate,
-					ReasonToVisit = e.Reason_To_Visit,
-					TreatmentPlan = e.Treatment_Plan,
-					Note = e.Note,
-					Conditions = e.Conditions.Select(c => c.Condition_Id).ToList(),
-					Medicines = e.Prescriptions
-						.SelectMany(p => p.PatientMedicines)
-						.Select(m => new MedicineDetailsReadDto
-						{
-							Name = m.Medicine.Name,
-							FrequencyInHours = m.FrequencyInHours,
-							DurationInDays = m.DurationInDays,
-							Dose = m.Dosage
-						})
-						.ToList()
-				})
+				.Where(e => e.Id == encounterId)
 				.FirstOrDefaultAsync();
 
 			if (encounter == null)
 				throw new Exception("Encounter not found");
 
+			var patient = await context.Patients
+				.AsNoTracking()
+				.Where(p => p.Id == encounter.PatientId)
+				.Select(p => new
+				{
+					p.NationalId,
+					p.ApplicationUserId
+				})
+				.FirstOrDefaultAsync();
+
+			var healthCareProviderName = await context.HealthCareProviders
+				.AsNoTracking()
+				.Where(provider => provider.HealthCareProvider_Id == encounter.HealthCareProviderId)
+				.Select(provider => provider.ApplicationUser.First_Name + " " + provider.ApplicationUser.Last_Name)
+				.FirstOrDefaultAsync() ?? "No Data";
+
+			var conditionIds = await context.Conditions
+				.AsNoTracking()
+				.Where(condition => condition.EncounterId == encounter.Id)
+				.Select(condition => condition.Condition_Id)
+				.ToListAsync();
+
+			var medicines = await context.Prescriptions
+				.AsNoTracking()
+				.Where(prescription => prescription.EncounterId == encounter.Id)
+				.SelectMany(prescription => prescription.PatientMedicines!)
+				.Select(medicine => new MedicineDetailsReadDto
+				{
+					Name = medicine.Medicine.Name,
+					FrequencyInHours = medicine.FrequencyInHours,
+					DurationInDays = medicine.DurationInDays,
+					Dose = medicine.Dosage
+				})
+				.ToListAsync();
+
 			var conditionDetails = new List<ConditionDetailsReadDto>();
-			foreach (var conditionId in encounter.Conditions)
+			foreach (var conditionId in conditionIds)
 			{
 				var condition = await getConditionDetails(conditionId);
 				conditionDetails.Add(condition);
@@ -320,15 +349,15 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 
 			return new EncounterDetailsDto
 			{
-				PatientNationalId = encounter.PatientNationalId.Value,
-				PatientName = await GetUserFullNameAsync(context, encounter.PatientUserId),
-				HealthCareProviderName = encounter.HealthCareProvidersName,
-				Date = encounter.EncounterDate.ToString("yyyy-MM-dd"),
-				Reason_To_Visit = encounter.ReasonToVisit,
+				PatientNationalId = patient?.NationalId.Value ?? "No Data",
+				PatientName = await GetUserFullNameAsync(context, patient?.ApplicationUserId),
+				HealthCareProviderName = healthCareProviderName,
+				Date = encounter.StartDate.ToString("yyyy-MM-dd"),
+				Reason_To_Visit = encounter.ReasonToVisit.Value,
 				Treatment_Plan = encounter.TreatmentPlan,
 				Note = encounter.Note ?? "",
 				Conditions = conditionDetails,
-				Prescription = encounter.Medicines
+				Prescription = medicines
 			};
 		}
 

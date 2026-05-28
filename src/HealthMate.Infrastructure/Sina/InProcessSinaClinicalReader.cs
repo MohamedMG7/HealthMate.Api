@@ -44,16 +44,16 @@ public class InProcessSinaClinicalReader : ISinaClinicalReader
         var medications = await GetActiveMedicationsAsync(patientId, ct);
         var encounters = await context.Encounters
             .AsNoTracking()
-            .Where(e => e.PatientId == patientId && !e.isDeleted)
+            .Where(e => e.PatientId == patientId && !e.IsDeleted)
             .OrderByDescending(e => e.StartDate)
             .Take(3)
             .Select(e => new EncounterSummary(
-                e.Encounter_Id,
-                $"#E-{e.Encounter_Id}",
+                e.Id,
+                $"#E-{e.Id}",
                 e.StartDate,
                 e.EndDate,
-                e.Reason_To_Visit,
-                e.Treatment_Plan,
+                e.ReasonToVisit.Value,
+                e.TreatmentPlan,
                 e.Note))
             .ToArrayAsync(ct);
 
@@ -141,8 +141,8 @@ public class InProcessSinaClinicalReader : ISinaClinicalReader
     {
         return await context.Encounters
             .AsNoTracking()
-            .Where(e => e.PatientId == patientId && e.Encounter_Id == encounterId && !e.isDeleted)
-            .Select(e => new EncounterSummary(e.Encounter_Id, $"#E-{e.Encounter_Id}", e.StartDate, e.EndDate, e.Reason_To_Visit, e.Treatment_Plan, e.Note))
+            .Where(e => e.PatientId == patientId && e.Id == encounterId && !e.IsDeleted)
+            .Select(e => new EncounterSummary(e.Id, $"#E-{e.Id}", e.StartDate, e.EndDate, e.ReasonToVisit.Value, e.TreatmentPlan, e.Note))
             .FirstOrDefaultAsync(ct);
     }
 
