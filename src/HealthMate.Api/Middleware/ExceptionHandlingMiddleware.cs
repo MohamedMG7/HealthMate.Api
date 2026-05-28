@@ -1,5 +1,6 @@
 using System.Net.Mime;
 using HealthMate.Application.Common.Exceptions;
+using HealthMate.Domain.Aggregates.Encounter;
 using HealthMate.Domain.Aggregates.Patient;
 using HealthMate.Domain.Common;
 using HealthMate.Fhir.Ports;
@@ -14,6 +15,9 @@ public sealed class ExceptionHandlingMiddleware(
 {
     private static readonly Dictionary<Type, (int StatusCode, string Code, string Title)> DomainMappings = new()
     {
+        [typeof(EncounterNotFoundException)] = (StatusCodes.Status404NotFound, "encounter_not_found", "The encounter could not be found."),
+        [typeof(PatientNotFoundForEncounterException)] = (StatusCodes.Status404NotFound, "patient_not_found_for_encounter", "The patient could not be found."),
+        [typeof(HealthCareProviderNotFoundForEncounterException)] = (StatusCodes.Status404NotFound, "health_care_provider_not_found_for_encounter", "The health care provider could not be found."),
         [typeof(PatientNotFoundException)] = (StatusCodes.Status404NotFound, "patient_not_found", "The patient could not be found."),
         [typeof(PatientAlreadyExistsException)] = (StatusCodes.Status409Conflict, "patient_conflict", "The patient conflicts with existing data.")
     };

@@ -9,8 +9,9 @@ public sealed class PrescriptionConfiguration : IEntityTypeConfiguration<Prescri
     public void Configure(EntityTypeBuilder<Prescription> builder)
     {
         builder.HasOne(prescription => prescription.Encounter)
-            .WithMany(encounter => encounter.Prescriptions)
+            .WithMany()
             .HasForeignKey(prescription => prescription.EncounterId)
+            .IsRequired(false)
             .OnDelete(DeleteBehavior.NoAction);
     }
 }

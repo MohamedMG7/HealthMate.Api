@@ -115,19 +115,28 @@ namespace HealthMate.Application.Manager.PatientManager
                 .Take(4)
                 .Select(encounter => new
                 {
-                    encounter.Encounter_Id,
-                    HealthCareProviderFirstName = encounter.HealthCareProvider.ApplicationUser.First_Name,
-                    HealthCareProviderLastName = encounter.HealthCareProvider.ApplicationUser.Last_Name,
-                    encounter.HealthCareProvider.Specialization,
+                    encounter.Id,
+                    HealthCareProviderFirstName = context.HealthCareProviders
+                        .Where(provider => provider.HealthCareProvider_Id == encounter.HealthCareProviderId)
+                        .Select(provider => provider.ApplicationUser.First_Name)
+                        .FirstOrDefault(),
+                    HealthCareProviderLastName = context.HealthCareProviders
+                        .Where(provider => provider.HealthCareProvider_Id == encounter.HealthCareProviderId)
+                        .Select(provider => provider.ApplicationUser.Last_Name)
+                        .FirstOrDefault(),
+                    Specialization = context.HealthCareProviders
+                        .Where(provider => provider.HealthCareProvider_Id == encounter.HealthCareProviderId)
+                        .Select(provider => provider.Specialization)
+                        .FirstOrDefault(),
                     encounter.StartDate
                 })
                 .ToListAsync();
 
             return recentEncounters.Select(encounter => new patientDashboardEncounterHistory
                 {
-                    EncounterId = encounter.Encounter_Id,
+                    EncounterId = encounter.Id,
                     HcpName = "DR/ " + encounter.HealthCareProviderFirstName + " " + encounter.HealthCareProviderLastName,
-                    HcpSpecialization = encounter.Specialization,
+                    HcpSpecialization = encounter.Specialization ?? "No Data",
                     EncounterDate = encounter.StartDate.ToString("yyyy-MM-dd")
                 })
                 .ToList();

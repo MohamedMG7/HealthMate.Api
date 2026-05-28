@@ -11,6 +11,7 @@ using HealthMate.Application.Documents.Contracts;
 using HealthMate.Application.LabTests.Contracts;
 using HealthMate.Application.Manager.UtilityManager;
 using HealthMate.Application.Abstractions.Enums;
+using HealthMate.Domain.Aggregates.Encounter;
 using HealthMate.Infrastructure.Data.DbHelper;
 
 namespace HealthMate.Application.Manager.HealthRecordManager
@@ -48,16 +49,16 @@ namespace HealthMate.Application.Manager.HealthRecordManager
 
 			var encounterList = encounters.Select(x => new EncounterReadDto
 			{
-				Encounter_Id = x.Encounter_Id,
+				Encounter_Id = x.Id,
 				Patient_Id = x.PatientId,
-				Encounter_Fhir_Id = x.Encounter_Fhir_Id,
+				Encounter_Fhir_Id = x.FhirId,
 				HealthcareProvider_Id = x.HealthCareProviderId,
-				isDeleted = x.isDeleted,
-				Reason_To_Visit = x.Reason_To_Visit,
+				isDeleted = x.IsDeleted,
+				Reason_To_Visit = x.ReasonToVisit.Value,
 				StartDate = x.StartDate,
 				EndDate = x.EndDate,
 				Location = x.Location,
-				Treatment_Plan = x.Treatment_Plan,
+				Treatment_Plan = x.TreatmentPlan,
 				Note = x.Note
 			});
 

@@ -1,3 +1,4 @@
+using HealthMate.Domain.Aggregates.Encounter;
 
 
 namespace HealthMate.Infrastructure.Data.Models

@@ -30,5 +30,11 @@ public sealed class ConditionConfiguration : IEntityTypeConfiguration<Condition>
             .HasForeignKey(condition => condition.Disease_Id)
             .IsRequired(true)
             .OnDelete(DeleteBehavior.NoAction);
+
+        builder.HasOne(condition => condition.Encounter)
+            .WithMany()
+            .HasForeignKey(condition => condition.EncounterId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }
