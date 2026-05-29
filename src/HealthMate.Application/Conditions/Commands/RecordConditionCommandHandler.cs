@@ -21,6 +21,15 @@ public sealed class RecordConditionCommandHandler(
             throw new EncounterNotFoundException(request.EncounterId);
         }
 
+        if (encounter.Status != EncounterStatus.Active)
+        {
+            logger.LogWarning(
+                "Late entry: recording condition on {Status} encounter {EncounterId} for patient {PatientId}",
+                encounter.Status,
+                encounter.Id,
+                encounter.PatientId);
+        }
+
         if (!await conditionRepository.DiseaseExistsAsync(request.DiseaseId, ct))
         {
             throw new DiseaseNotFoundForConditionException(request.DiseaseId);

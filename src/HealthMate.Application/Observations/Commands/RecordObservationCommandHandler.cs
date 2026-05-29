@@ -21,6 +21,15 @@ public sealed class RecordObservationCommandHandler(
             throw new EncounterNotFoundException(request.EncounterId);
         }
 
+        if (encounter.Status != EncounterStatus.Active)
+        {
+            logger.LogWarning(
+                "Late entry: recording observation on {Status} encounter {EncounterId} for patient {PatientId}",
+                encounter.Status,
+                encounter.Id,
+                encounter.PatientId);
+        }
+
         var observation = Observation.Record(
             encounter.PatientId,
             encounter.Id,

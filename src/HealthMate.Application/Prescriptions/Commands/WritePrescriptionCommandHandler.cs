@@ -21,6 +21,15 @@ public sealed class WritePrescriptionCommandHandler(
             throw new EncounterNotFoundException(request.EncounterId);
         }
 
+        if (encounter.Status != EncounterStatus.Active)
+        {
+            logger.LogWarning(
+                "Late entry: recording prescription on {Status} encounter {EncounterId} for patient {PatientId}",
+                encounter.Status,
+                encounter.Id,
+                encounter.PatientId);
+        }
+
         if (await prescriptionRepository.ExistsForEncounterAsync(request.EncounterId, ct))
         {
             throw new PrescriptionAlreadyExistsForEncounterException(request.EncounterId);
