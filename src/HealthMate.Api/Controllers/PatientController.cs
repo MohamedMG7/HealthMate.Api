@@ -1,5 +1,5 @@
-using HealthMate.Application.Patients.Contracts;
 using HealthMate.Application.Common;
+using HealthMate.Application.Encounters.Queries;
 using HealthMate.Application.Manager.PatientManager;
 using HealthMate.Application.Patients.Commands;
 using HealthMate.Application.Patients.Contracts;
@@ -93,6 +93,20 @@ namespace HealthMate.Api.Controllers
 			return Ok(dashboardData);
 		}
 		
+		[Authorize(Policy = "PatientOrHealthCareProvider")]
+		[HttpGet("{patientId:int}/encounters")]
+		public async Task<IActionResult> GetEncounterHistory(
+			int patientId,
+			[FromQuery] int page = 1,
+			[FromQuery] int pageSize = 20,
+			CancellationToken ct = default)
+		{
+			var result = await _dispatcher.DispatchAsync(
+				new ListPatientEncountersQuery(patientId, page, pageSize),
+				ct);
+			return Ok(result);
+		}
+
 		//[Authorize(policy:"PatientOnly")]
 		//[HttpPost]
 		//[Route("AddMedicine")]
