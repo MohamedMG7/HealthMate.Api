@@ -17,9 +17,7 @@ namespace HealthMate.Infrastructure.Repositories.HealthCareProviderRepos
 
 		Task<IEnumerable<EncounterTableSummaryReadDto>> GetRecentEncountersOrderedAsync(int healthCareProviderId);
 
-		Task<int> AddEncounterAndReturnEncounterId(EndEncounterEncounterAddDto encounterData, int PatientId, int HealthCareProvider);
-		Task<bool> EndEncounter(EndEncounter endEcounterDto,int PatientId, int HealthcareProviderId);
-		Task<int> GetPatientIdByPatientNationalId(string PatientNationalId); // this should return the patient Id if existed
+		Task<int> GetPatientIdByPatientNationalId(string PatientNationalId);
 		Task<List<int>> GetLast7DaysEncountersCountAsync(int healthCareProviderId);
 		Task<List<ConditionFrequencyDto>> GetTop5FrequentConditionsWithCountAsync(int healthCareProviderId);
 		Task<string> GetHealthCareProviderSpecialization(int healthCareProviderId);

@@ -1,7 +1,5 @@
-using HealthMate.Application.Conditions.Contracts;
 using HealthMate.Application.Manager.ConditionManager;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HealthMate.Api.Controllers
@@ -28,14 +26,6 @@ namespace HealthMate.Api.Controllers
 			}
 
 			return Ok(Conditions);
-		}
-
-		[Authorize(policy:"PatientOrHealthCareProvider")]
-		[HttpPost]
-		[Obsolete("Use POST /api/Encounter/{encounterId}/conditions; will be removed after Slice 5.")]
-		public IActionResult AddCondition(ConditionAddDto condition) { 
-			_conditionManager.AddCondition(condition);	
-			return Ok("Added Succesfully");
 		}
 
 		[Authorize(policy:"PatientOrHealthCareProvider")]

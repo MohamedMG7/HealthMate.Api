@@ -6,8 +6,6 @@ namespace HealthMate.Application.Manager.ObservationManager
 {
 	public interface IObservationManager
 	{
-		[Obsolete("Use POST /api/Encounter/{encounterId}/observations; will be removed after Slice 5.")]
-		void AddObservation(ObservationAddDto observationDto);
 		IEnumerable<ObservationReadDto> GetAllObservations();
 		ObservationReadDto GetObservation(int observationId);
 		void DeleteObservation(int ObservationId);

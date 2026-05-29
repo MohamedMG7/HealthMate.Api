@@ -3,14 +3,11 @@ using HealthMate.Application.Conditions.Commands;
 using HealthMate.Application.Common;
 using HealthMate.Application.Encounters.Commands;
 using HealthMate.Application.Encounters.Contracts;
-using HealthMate.Application.Manager.ConditionManager;
-using HealthMate.Application.Manager.EncounterManager;
 using HealthMate.Application.Observations.Commands;
 using HealthMate.Application.Observations.Contracts;
 using HealthMate.Application.Prescriptions.Commands;
 using HealthMate.Application.Prescriptions.Contracts;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HealthMate.Api.Controllers
@@ -21,33 +18,9 @@ namespace HealthMate.Api.Controllers
 	public class EncounterController : ControllerBase
 	{
 		private readonly IHandlerDispatcher _dispatcher;
-		private readonly IEncounterManager _encounterManager;
-		public EncounterController(IHandlerDispatcher dispatcher, IEncounterManager encounterManager)
+		public EncounterController(IHandlerDispatcher dispatcher)
 		{
 			_dispatcher = dispatcher;
-			_encounterManager = encounterManager;
-		}
-
-		[HttpGet]
-		[Obsolete("Use GET /api/Patient/{patientId}/encounters; will be removed after the iteration cleanup PR.")]
-		public IActionResult GetAllEncounters()
-		{
-			var Conditions = _encounterManager.GetAllEncounters();
-
-			if (Conditions == null || !Conditions.Any())
-			{
-				return NotFound("No Encounters Found");
-			}
-
-			return Ok(Conditions);
-		}
-
-		[HttpPost]
-		[Obsolete("Use POST /api/Encounter/start; will be removed after the iteration cleanup PR.")]
-		public IActionResult AddEncounter(EncounterAddDto encounter)
-		{
-			_encounterManager.AddEncounter(encounter);
-			return Ok("Added Succesfully");
 		}
 
 		[Authorize(Policy = "HealthCareProviderOnly")]
@@ -144,26 +117,6 @@ namespace HealthMate.Api.Controllers
 				ct);
 
 			return Created($"/api/Prescription/{result.PrescriptionId}", result);
-		}
-
-		[HttpGet]
-		[Route("{id}")]
-		public IActionResult GetEncounterById(int id)
-		{
-			var Encounter = _encounterManager.GetEncounter(id);
-			if (Encounter == null)
-			{
-				return NotFound("No Encounter Found by this Id");
-			}
-			return Ok(Encounter);
-		}
-
-		[HttpDelete]
-		[Route("{id}")]
-		public ActionResult DeleteEncounterById(int id)
-		{
-			_encounterManager.DeleteEncounter(id);
-			return Ok("Deleted Succesfully");
 		}
 	}
 }

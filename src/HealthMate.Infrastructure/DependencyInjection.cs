@@ -8,7 +8,6 @@ using HealthMate.Application.Manager.AdminManager;
 using HealthMate.Application.Manager.BodySiteManager;
 using HealthMate.Application.Manager.ConditionManager;
 using HealthMate.Application.Manager.DiseaseManager;
-using HealthMate.Application.Manager.EncounterManager;
 using HealthMate.Application.Manager.HealthCareProviderManager;
 using HealthMate.Application.Manager.HealthRecordManager;
 using HealthMate.Application.Manager.LabTestManager;
@@ -127,13 +126,10 @@ public static class DependencyInjection
 
         services.AddScoped<IGenericRepository<Animal>, GenericRepository<Animal>>();
         services.AddScoped<IGenericRepository<BodySite>, GenericRepository<BodySite>>();
-        services.AddScoped<IGenericRepository<Condition>, GenericRepository<Condition>>();
         services.AddScoped<IGenericRepository<Disease>, GenericRepository<Disease>>();
-        services.AddScoped<IGenericRepository<Encounter>, GenericRepository<Encounter>>();
         services.AddScoped<IGenericRepository<LabTest>, GenericRepository<LabTest>>();
         services.AddScoped<IGenericRepository<LabTestResult>, GenericRepository<LabTestResult>>();
         services.AddScoped<IGenericRepository<MedicalImage>, GenericRepository<MedicalImage>>();
-        services.AddScoped<IGenericRepository<Observation>, GenericRepository<Observation>>();
         services.AddScoped<IGenericRepository<Prescription>, GenericRepository<Prescription>>();
         services.AddScoped<IConditionRepository, EfConditionRepository>();
         services.AddScoped<IEncounterRepository, EfEncounterRepository>();
@@ -172,7 +168,6 @@ public static class DependencyInjection
 
         services.AddScoped<IPatientManager, PatientManager>();
         services.AddScoped<IConditionManager, ConditionManager>();
-        services.AddScoped<IEncounterManager, EncounterManager>();
         services.AddScoped<IObservationManager, ObservationManager>();
         services.AddScoped<IBodySiteManager, BodySiteManager>();
         services.AddScoped<IDiseaseManager, DiseaseManager>();
