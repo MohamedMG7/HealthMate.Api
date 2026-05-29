@@ -41,6 +41,44 @@ internal static class EncounterIntegrationTestHelpers
         return new SeededEncounter(seeded.PatientId, seeded.ProviderId, encounter.Id);
     }
 
+    public static async Task<(int PatientId, int ProviderId)> SeedPatientAndHcpAsync(IServiceProvider services, string prefix)
+    {
+        using var scope = services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<HealthMateContext>();
+        var seeded = await SeedPatientAndProviderAsync(context, prefix);
+        return (seeded.PatientId, seeded.ProviderId);
+    }
+
+    public static async Task<int> SeedDiseaseAsync(HealthMateContext context, string displayName, string code = "TEST")
+    {
+        var seed = Interlocked.Increment(ref seedCounter);
+        var disease = new Disease
+        {
+            Description = "Synthetic disease for tests",
+            Scientific_Name = $"Syn_Sci_{code}_{seed}",
+            Display_Name = displayName,
+            Code = $"{code}{seed}",
+            ICD11_Code = $"X{code}{seed}"
+        };
+        context.Diseases.Add(disease);
+        await context.SaveChangesAsync();
+        return disease.Disease_Id;
+    }
+
+    public static async Task<int> SeedMedicineAsync(HealthMateContext context, string name, string activeIngredients = "Acetaminophen 500mg")
+    {
+        var medicine = new Medicine
+        {
+            Name = name,
+            Description = "Synthetic medicine for tests",
+            ActiveIngrediantes = activeIngredients,
+            UsedToCure = "Synthetic use"
+        };
+        context.Medicines.Add(medicine);
+        await context.SaveChangesAsync();
+        return medicine.Id;
+    }
+
     public static async Task<SeededLateEntryEncounter> SeedFinishedEncounterWithCatalogAsync(IServiceProvider services, string prefix)
     {
         using var scope = services.CreateScope();
