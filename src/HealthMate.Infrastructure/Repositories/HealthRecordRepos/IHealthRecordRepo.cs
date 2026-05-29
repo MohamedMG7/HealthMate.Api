@@ -1,6 +1,7 @@
 using HealthMate.Domain.Common.Enums;
 using HealthMate.Application.Conditions.Contracts;
 using HealthMate.Application.Encounters.Contracts;
+using HealthMate.Application.HealthRecord.Contracts;
 using HealthMate.Application.LabTests.Contracts;
 using HealthMate.Application.Documents.Contracts;
 using HealthMate.Application.Prescriptions.Contracts.Medicines;
@@ -39,5 +40,7 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 		Task<LabTestDetailsReadDto> getLabTestDetails(int labTestId);
 		// Encounter Details
 		Task<EncounterDetailsDto> getEncounterDetails(int encounterId);
+
+		Task<HealthRecordsReadDto> GetAllHealthRecordsAsync(int patientId);
 	}
 }

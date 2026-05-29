@@ -1,7 +1,6 @@
 using HealthMate.Application.Conditions.Contracts;
 using HealthMate.Application.Abstractions.Enums;
 using HealthMate.Domain.Aggregates.Condition;
-using HealthMate.Infrastructure.Repositories;
 using HealthMate.Infrastructure.Repositories.ConditionRepos;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,11 +13,6 @@ namespace HealthMate.Application.Manager.ConditionManager
         {
             _conditionRepo = conditionRepo;
         }
-
-		public void AddCondition(ConditionAddDto condition)
-		{
-			throw new NotImplementedException("Use POST /api/Encounter/{encounterId}/conditions.");
-		}
 
 		public void DeleteCondition(int conditionId)
 		{

@@ -1,7 +1,5 @@
-using HealthMate.Application.Observations.Contracts;
 using HealthMate.Application.Manager.ObservationManager;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
 
 namespace HealthMate.Api.Controllers
 {
@@ -29,14 +27,6 @@ namespace HealthMate.Api.Controllers
 			return Ok(Observations);
 		}
 
-		[HttpPost]
-		[Obsolete("Use POST /api/Encounter/{encounterId}/observations; will be removed after Slice 5.")]
-		public IActionResult AddObservation(ObservationAddDto observation)
-		{
-			_observationManager.AddObservation(observation);
-			return Ok("Added Succesfully");
-		}
-
 		[HttpGet]
 		[Route("{id}")]
 		public IActionResult GetEncounterById(int id)
@@ -47,15 +37,6 @@ namespace HealthMate.Api.Controllers
 				return NotFound("No Observation Found by this Id");
 			}
 			return Ok(Observation);
-		}
-
-		[HttpDelete]
-		[Route("{id}")]
-		[Obsolete("Legacy observation delete stub; will be removed after Slice 5.")]
-		public ActionResult DeleteEncounterById(int id)
-		{
-			_observationManager.DeleteObservation(id);
-			return Ok("Deleted Succesfully");
 		}
 	}
 }

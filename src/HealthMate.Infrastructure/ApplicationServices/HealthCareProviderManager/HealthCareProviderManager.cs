@@ -1,12 +1,6 @@
 using HealthMate.Application.Providers.Contracts;
-using HealthMate.Infrastructure.Data.Models;
-using HealthMate.Infrastructure.Repositories;
 using HealthMate.Infrastructure.Repositories.HealthCareProviderRepos;
-using HealthMate.Application.Encounters.Contracts;
 using HealthMate.Application.Manager.HealthRecordManager;
-using HealthMate.Application.HealthRecord.Contracts;
-using Microsoft.EntityFrameworkCore;
-using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Application.Conditions.Contracts;
 using HealthMate.Application.Manager.PatientManager;
 using HealthMate.Application.Patients.Contracts;
@@ -56,11 +50,6 @@ namespace HealthMate.Application.Manager.HealthCareProviderManager
 		public async Task<int> GetTheCountOfTotalEncountersAsync(int healthCareProviderId)
 		{
 			return await _HealthCareProviderRepo.GetTheCountOfTotalEncounters(healthCareProviderId);
-		}
-
-		[Obsolete("Use POST /api/Encounter/{encounterId}/end (plus the per-resource endpoints); will be removed after the iteration cleanup PR.")]
-		public Task<bool> EndEncounter(EndEncounter endEcounterDto,int PatientId, int HealthcareProviderId){
-			throw new NotImplementedException("Use POST /api/Encounter/{encounterId}/end (plus the per-resource endpoints).");
 		}
 
 		public async Task<patientDashboardDto> StartEncounter(string PatientNationalId)

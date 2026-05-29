@@ -1,8 +1,4 @@
-using HealthMate.Application.Encounters.Contracts;
 using HealthMate.Application.Observations.Contracts;
-using HealthMate.Domain.Aggregates.Observation;
-using HealthMate.Infrastructure.Data.Models;
-using HealthMate.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using HealthMate.Infrastructure.Repositories.ObservationRepos;
 using HealthMate.Application.Patients.Contracts;
@@ -26,12 +22,6 @@ namespace HealthMate.Application.Manager.ObservationManager
         }
 
 		#region CRUD
-		[Obsolete("Use POST /api/Encounter/{encounterId}/observations; will be removed after Slice 5.")]
-		public void AddObservation(ObservationAddDto observationDto)
-		{
-			throw new NotImplementedException("Use POST /api/Encounter/{id}/observations");
-		}
-
 		public void DeleteObservation(int ObservationId)
 		{
 			throw new NotImplementedException();

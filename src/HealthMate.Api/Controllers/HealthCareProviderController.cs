@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using HealthMate.Application.Abstractions.Validation;
-using HealthMate.Application.Encounters.Contracts;
 using HealthMate.Application.Manager.HealthCareProviderManager;
-using HealthMate.Application.Providers.Contracts;
 using HealthMate.Application.Manager.HealthRecordManager;
 using Microsoft.AspNetCore.Authorization;
 
@@ -45,14 +43,6 @@ namespace HealthMate.Api.Controllers
 			return Ok(Records);
 		}
 		
-		[HttpPost]
-		[Route("EndEncounter/{patientId}/{healthcareProviderId}")]
-		[Obsolete("Use POST /api/Encounter/{encounterId}/end (plus the per-resource endpoints); will be removed after the iteration cleanup PR.")]
-		public Task<IActionResult> EndEncounter([FromBody] EndEncounter EndEncounterData,int patientId, int healthcareProviderId)
-		{
-			throw new NotImplementedException("Use POST /api/Encounter/{encounterId}/end (plus the per-resource endpoints).");
-		}
-
 		[HttpGet]
 		[Route("StartEncounter")]
 		public async Task<IActionResult> StartEncounter([FromQuery]string patientNationalId){
