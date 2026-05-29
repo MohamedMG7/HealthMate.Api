@@ -47,20 +47,10 @@ namespace HealthMate.Api.Controllers
 		
 		[HttpPost]
 		[Route("EndEncounter/{patientId}/{healthcareProviderId}")]
-		public async Task<IActionResult> EndEncounter([FromBody] EndEncounter EndEncounterData,int patientId, int healthcareProviderId)
+		[Obsolete("Use POST /api/Encounter/{encounterId}/end (plus the per-resource endpoints); will be removed after the iteration cleanup PR.")]
+		public Task<IActionResult> EndEncounter([FromBody] EndEncounter EndEncounterData,int patientId, int healthcareProviderId)
 		{
-			try
-			{
-				var result = await _HealthCareProviderManager.EndEncounter(EndEncounterData,patientId,healthcareProviderId);
-				if(result){
-					return StatusCode(StatusCodes.Status201Created);
-				}
-				return StatusCode(StatusCodes.Status400BadRequest,"Something Wrong Happened");
-			}
-			catch (Exception ex)
-			{
-				return StatusCode(500, $"Internal server error: {ex.Message}");
-			}
+			throw new NotImplementedException("Use POST /api/Encounter/{encounterId}/end (plus the per-resource endpoints).");
 		}
 
 		[HttpGet]

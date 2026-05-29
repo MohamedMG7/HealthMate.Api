@@ -42,7 +42,7 @@ namespace HealthMate.Api.Controllers
 		}
 
 		[HttpPost]
-		[Obsolete("Use POST /api/Encounter/start; will be removed after Slice 5.")]
+		[Obsolete("Use POST /api/Encounter/start; will be removed after the iteration cleanup PR.")]
 		public IActionResult AddEncounter(EncounterAddDto encounter)
 		{
 			_encounterManager.AddEncounter(encounter);
@@ -63,6 +63,20 @@ namespace HealthMate.Api.Controllers
 				ct);
 
 			return Created($"/api/Encounter/{result.EncounterId}", result);
+		}
+
+		[Authorize(Policy = "HealthCareProviderOnly")]
+		[HttpPost("{encounterId:int}/end")]
+		public async Task<IActionResult> EndEncounter(
+			int encounterId,
+			EndEncounterRequestDto request,
+			CancellationToken ct)
+		{
+			var result = await _dispatcher.DispatchAsync(
+				new EndEncounterCommand(encounterId, request.TreatmentPlan, request.Note),
+				ct);
+
+			return Ok(result);
 		}
 
 		[Authorize(Policy = "HealthCareProviderOnly")]

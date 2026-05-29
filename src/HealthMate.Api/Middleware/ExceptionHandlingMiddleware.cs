@@ -18,6 +18,7 @@ public sealed class ExceptionHandlingMiddleware(
     private static readonly Dictionary<Type, (int StatusCode, string Code, string Title)> DomainMappings = new()
     {
         [typeof(EncounterNotFoundException)] = (StatusCodes.Status404NotFound, "encounter_not_found", "The encounter could not be found."),
+        [typeof(EncounterAlreadyEndedException)] = (StatusCodes.Status409Conflict, "encounter_already_ended", "The encounter has already been ended."),
         [typeof(ConditionNotFoundException)] = (StatusCodes.Status404NotFound, "condition_not_found", "The condition could not be found."),
         [typeof(DiseaseNotFoundForConditionException)] = (StatusCodes.Status404NotFound, "disease_not_found_for_condition", "The disease could not be found."),
         [typeof(PatientNotFoundForEncounterException)] = (StatusCodes.Status404NotFound, "patient_not_found_for_encounter", "The patient could not be found."),

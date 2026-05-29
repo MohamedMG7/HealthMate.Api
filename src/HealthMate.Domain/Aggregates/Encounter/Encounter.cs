@@ -45,6 +45,26 @@ public sealed class Encounter : AggregateRoot<int>
         };
     }
 
+    public void End(string treatmentPlan, string? note, IDateTimeProvider clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+
+        if (Status != EncounterStatus.Active)
+        {
+            throw new EncounterAlreadyEndedException(Id, Status);
+        }
+
+        if (string.IsNullOrWhiteSpace(treatmentPlan))
+        {
+            throw new DomainException("Treatment plan is required when ending an encounter.");
+        }
+
+        EndDate = clock.UtcNow.UtcDateTime;
+        TreatmentPlan = treatmentPlan.Trim();
+        Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim();
+        Status = EncounterStatus.Finished;
+    }
+
     public static Encounter CreateLegacy(
         int patientId,
         int healthCareProviderId,

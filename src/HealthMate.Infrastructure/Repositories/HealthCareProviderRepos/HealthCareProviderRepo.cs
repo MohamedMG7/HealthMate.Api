@@ -274,59 +274,10 @@ namespace HealthMate.Infrastructure.Repositories.HealthCareProviderRepos
 
 		
 
-		public async Task<bool> EndEncounter(EndEncounter endEcounterDto, int PatientId, int HealthcareProviderId)
+		[Obsolete("Use POST /api/Encounter/{encounterId}/end (plus the per-resource endpoints); will be removed after the iteration cleanup PR.")]
+		public Task<bool> EndEncounter(EndEncounter endEcounterDto, int PatientId, int HealthcareProviderId)
 		{
-			using var transaction = await _context.Database.BeginTransactionAsync();
-			try
-			{
-				// 1. Validate all required entities exist
-				// use validation repo to validate the healthcareProviderId and the patient Id
-				// the validation shuold be in the controller 
-
-				// 2. Create and save encounter
-				var encounterId = await AddEncounterAndReturnEncounterId(endEcounterDto.Encounter, PatientId, HealthcareProviderId);
-
-				// 3. Create condition if provided
-				if (endEcounterDto.Condition != null)
-				{
-					await CreateCondition(endEcounterDto.Condition, encounterId, PatientId);
-				}
-
-				var prescriptionPub = await _context.HealthCareProviders.Where(h => h.HealthCareProvider_Id == HealthcareProviderId).AsNoTracking()
-					.Select(h => "DR/" + h.ApplicationUser.First_Name + " " + h.ApplicationUser.Last_Name).FirstOrDefaultAsync() ?? "NO DATA";
-
-				// 4. Create prescription if provided
-				if (endEcounterDto.Prescription != null)
-				{
-#pragma warning disable CS0618
-					await CreatePrescription(endEcounterDto.Prescription, PatientId, encounterId, prescriptionPub);
-#pragma warning restore CS0618
-				}
-
-				// 5. Create LabTest If Provided
-				if(endEcounterDto.LabTests != null){
-					await CreateLabTest(PatientId,endEcounterDto.LabTests);
-				} 
-				
-				// 6. Create Observations
-				if(endEcounterDto.Observations != null){
-					foreach(var observation in endEcounterDto.Observations){
-						await CreateObservation(observation,PatientId,encounterId);
-					}
-				}
-
-				// 6. Save all changes and commit transaction
-				await _context.SaveChangesAsync();
-				await transaction.CommitAsync();
-				return true;
-			}
-			catch (Exception ex)
-			{
-				await transaction.RollbackAsync();
-				// Log the inner exception
-				var innerException = ex.InnerException?.Message ?? ex.Message;
-				throw new Exception($"Database error: {innerException}");
-			}
+			throw new NotImplementedException("Use POST /api/Encounter/{encounterId}/end (plus the per-resource endpoints).");
 		}
 
 		#endregion

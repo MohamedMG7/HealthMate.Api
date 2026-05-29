@@ -58,8 +58,9 @@ namespace HealthMate.Application.Manager.HealthCareProviderManager
 			return await _HealthCareProviderRepo.GetTheCountOfTotalEncounters(healthCareProviderId);
 		}
 
-		public async Task<bool> EndEncounter(EndEncounter endEcounterDto,int PatientId, int HealthcareProviderId){
-			return await _HealthCareProviderRepo.EndEncounter(endEcounterDto,PatientId,HealthcareProviderId);
+		[Obsolete("Use POST /api/Encounter/{encounterId}/end (plus the per-resource endpoints); will be removed after the iteration cleanup PR.")]
+		public Task<bool> EndEncounter(EndEncounter endEcounterDto,int PatientId, int HealthcareProviderId){
+			throw new NotImplementedException("Use POST /api/Encounter/{encounterId}/end (plus the per-resource endpoints).");
 		}
 
 		public async Task<patientDashboardDto> StartEncounter(string PatientNationalId)
