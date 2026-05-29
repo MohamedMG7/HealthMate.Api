@@ -1,4 +1,6 @@
 using HealthMate.Application.Abstractions.Storage;
+using HealthMate.Domain.Aggregates.Prescription;
+using HealthMate.Domain.Common;
 using HealthMate.Infrastructure.Data.Models;
 using HealthMate.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authorization;
@@ -7,16 +9,18 @@ using Microsoft.AspNetCore.Http;
 namespace HealthMate.Application.Manager.MedicalRecordManager{
     public class RecordImageManager : IRecordImageManager{
         private readonly IGenericRepository<LabTest> _LabTestRepo;
-        private readonly IGenericRepository<Prescription> _PrescriptionRepo;
-        private readonly IGenericRepository<MedicalImage> _MedicalImageRepo;
-        private readonly IFileStorage _fileStorage;
-        public RecordImageManager(IGenericRepository<LabTest> LabTest,IFileStorage fileStorage, IGenericRepository<Prescription> Prescription,IGenericRepository<MedicalImage> MedicalImage)
-        {
-            _LabTestRepo = LabTest;
-            _fileStorage = fileStorage;
-            _PrescriptionRepo = Prescription;
-            _MedicalImageRepo = MedicalImage;
-        }
+		private readonly IGenericRepository<Prescription> _PrescriptionRepo;
+		private readonly IGenericRepository<MedicalImage> _MedicalImageRepo;
+		private readonly IFileStorage _fileStorage;
+		private readonly IDateTimeProvider _clock;
+		public RecordImageManager(IGenericRepository<LabTest> LabTest,IFileStorage fileStorage, IGenericRepository<Prescription> Prescription,IGenericRepository<MedicalImage> MedicalImage, IDateTimeProvider clock)
+		{
+			_LabTestRepo = LabTest;
+			_fileStorage = fileStorage;
+			_PrescriptionRepo = Prescription;
+			_MedicalImageRepo = MedicalImage;
+			_clock = clock;
+		}
 
 
         // record types {imaging .. prescription .. labtest} 
@@ -49,13 +53,7 @@ namespace HealthMate.Application.Manager.MedicalRecordManager{
             {
                 var filePath = await SaveFormFileAsync(image, "Prescriptions", $"{patientId}_{medicalRecordName}_{DateTime.Now:yyyyMMdd}");
 
-                var prescription = new Prescription
-                {
-                    PatientId = patientId,
-                    Publisher = medicalRecordName,
-                    PrescriptionDate = DateTime.Now,
-					PrescriptionImageUrl = filePath
-                };
+				var prescription = Prescription.UploadImage(patientId, medicalRecordName, filePath, _clock);
 
                 // TODO: Add prescription medicines logic when needed
                 await _PrescriptionRepo.AddAsync(prescription);

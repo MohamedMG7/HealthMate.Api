@@ -1,6 +1,7 @@
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
 using HealthMate.Domain.Aggregates.Condition;
+using HealthMate.Domain.Aggregates.Prescription;
 using HealthMate.Sina.Ports;
 using HealthMate.Sina.Tools;
 using Microsoft.EntityFrameworkCore;
@@ -124,17 +125,28 @@ public class InProcessSinaClinicalReader : ISinaClinicalReader
     {
         var query = context.Prescriptions
             .AsNoTracking()
-            .Include(p => p.PatientMedicines!)
-            .ThenInclude(pm => pm.Medicine)
+            .Include(p => p.Medicines)
             .Where(p => p.PatientId == patientId);
 
         if (!string.IsNullOrWhiteSpace(medicineName))
         {
-            query = query.Where(p => p.PatientMedicines!.Any(pm => EF.Functions.ILike(pm.Medicine.Name, $"%{medicineName}%")));
+            var term = medicineName.Trim();
+            query = query.Where(p => p.Medicines.Any(pm => context.Medicines.Any(medicine =>
+                medicine.Id == pm.MedicineId && EF.Functions.ILike(medicine.Name, $"%{term}%"))));
         }
 
         var prescriptions = await query.OrderByDescending(p => p.PrescriptionDate).Take(20).ToArrayAsync(ct);
-        return prescriptions.Select(MapPrescription).ToArray();
+        var medicineIds = prescriptions
+            .SelectMany(prescription => prescription.Medicines)
+            .Select(medicine => medicine.MedicineId)
+            .Distinct()
+            .ToArray();
+        var medicinesById = await context.Medicines
+            .AsNoTracking()
+            .Where(medicine => medicineIds.Contains(medicine.Id))
+            .ToDictionaryAsync(medicine => medicine.Id, ct);
+
+        return prescriptions.Select(prescription => MapPrescription(prescription, medicinesById)).ToArray();
     }
 
     public async Task<EncounterSummary?> GetEncounterNoteAsync(int patientId, int encounterId, CancellationToken ct)
@@ -159,24 +171,25 @@ public class InProcessSinaClinicalReader : ISinaClinicalReader
     public async Task<IReadOnlyList<ActiveMedicationSummary>> GetActiveMedicationsAsync(int patientId, CancellationToken ct)
     {
         var now = clock.UtcNow();
-        var medications = await context.PatientMedicines
-            .AsNoTracking()
-            .Include(pm => pm.Medicine)
-            .Where(pm => pm.PatientId == patientId)
+        var medications = await (
+            from patientMedicine in context.PrescriptionMedicines.AsNoTracking()
+            join medicine in context.Medicines.AsNoTracking() on patientMedicine.MedicineId equals medicine.Id
+            where patientMedicine.PatientId == patientId
+            select new { PatientMedicine = patientMedicine, Medicine = medicine })
             .ToArrayAsync(ct);
 
         return medications
-            .Where(pm => pm.DurationInDays <= 0 || pm.AddedDate.AddDays(pm.DurationInDays) >= now)
-            .Select(pm => new ActiveMedicationSummary(
-                pm.PatientMedicineId,
-                pm.MedicineId,
-                $"#PM-{pm.PatientMedicineId}",
-                pm.Medicine.Name,
-                pm.Medicine.ActiveIngrediantes,
-                pm.Dosage,
-                pm.FrequencyInHours,
-                pm.DurationInDays,
-                pm.AddedDate))
+            .Where(row => row.PatientMedicine.DurationInDays <= 0 || row.PatientMedicine.AddedDate.AddDays(row.PatientMedicine.DurationInDays) >= now)
+            .Select(row => new ActiveMedicationSummary(
+                row.PatientMedicine.Id,
+                row.PatientMedicine.MedicineId,
+                $"#PM-{row.PatientMedicine.Id}",
+                row.Medicine.Name,
+                row.Medicine.ActiveIngrediantes,
+                row.PatientMedicine.Dosage,
+                row.PatientMedicine.FrequencyInHours,
+                row.PatientMedicine.DurationInDays,
+                row.PatientMedicine.AddedDate))
             .ToArray();
     }
 
@@ -218,20 +231,24 @@ public class InProcessSinaClinicalReader : ISinaClinicalReader
         return new LabTestSummary(lab.LabTestId, $"#L-{lab.LabTestId}", lab.LabTestName, lab.RecordedTime, lab.Note, results);
     }
 
-    private static PrescriptionSummary MapPrescription(Prescription prescription)
+    private static PrescriptionSummary MapPrescription(Prescription prescription, IReadOnlyDictionary<int, Medicine> medicinesById)
     {
-        var medicines = (prescription.PatientMedicines ?? [])
-            .Select(pm => new PrescriptionMedicationSummary(
-                pm.PatientMedicineId,
-                pm.MedicineId,
-                pm.Medicine.Name,
-                pm.Medicine.ActiveIngrediantes,
-                pm.Dosage,
-                pm.FrequencyInHours,
-                pm.DurationInDays))
+        var medicines = prescription.Medicines
+            .Select(pm =>
+            {
+                medicinesById.TryGetValue(pm.MedicineId, out var medicine);
+                return new PrescriptionMedicationSummary(
+                    pm.Id,
+                    pm.MedicineId,
+                    medicine?.Name ?? "Unknown",
+                    medicine?.ActiveIngrediantes,
+                    pm.Dosage,
+                    pm.FrequencyInHours,
+                    pm.DurationInDays);
+            })
             .ToArray();
 
-        return new PrescriptionSummary(prescription.PrescriptionId, $"#RX-{prescription.PrescriptionId}", prescription.PrescriptionDate, prescription.EncounterId, medicines);
+        return new PrescriptionSummary(prescription.Id, $"#RX-{prescription.Id}", prescription.PrescriptionDate, prescription.EncounterId, medicines);
     }
 
     private int CalculateAge(DateOnly birthDate)

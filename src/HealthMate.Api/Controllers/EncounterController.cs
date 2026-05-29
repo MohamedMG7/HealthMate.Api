@@ -7,6 +7,8 @@ using HealthMate.Application.Manager.ConditionManager;
 using HealthMate.Application.Manager.EncounterManager;
 using HealthMate.Application.Observations.Commands;
 using HealthMate.Application.Observations.Contracts;
+using HealthMate.Application.Prescriptions.Commands;
+using HealthMate.Application.Prescriptions.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -105,6 +107,28 @@ namespace HealthMate.Api.Controllers
 				ct);
 
 			return Created($"/api/Condition/{result.ConditionId}", result);
+		}
+
+		[Authorize(Policy = "HealthCareProviderOnly")]
+		[HttpPost("{encounterId:int}/prescription")]
+		public async Task<IActionResult> WritePrescription(
+			int encounterId,
+			WritePrescriptionRequestDto request,
+			CancellationToken ct)
+		{
+			var medicines = request.Medicines
+				.Select(medicine => new WritePrescriptionMedicineLine(
+					medicine.MedicineId,
+					medicine.Dosage,
+					medicine.FrequencyInHours,
+					medicine.DurationInDays))
+				.ToArray();
+
+			var result = await _dispatcher.DispatchAsync(
+				new WritePrescriptionCommand(encounterId, request.Publisher, medicines),
+				ct);
+
+			return Created($"/api/Prescription/{result.PrescriptionId}", result);
 		}
 
 		[HttpGet]

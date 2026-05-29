@@ -223,39 +223,10 @@ namespace HealthMate.Infrastructure.Repositories.HealthCareProviderRepos
 
 			await _context.Observations.AddAsync(observation);
 		}
-		// i use the patient id to compose the nameIdentifier but this has security risks by exposing the internal id of the patient to healthcare provider
-		// so i should use the national id this will be more secure بس مكسل
-		private async Task CreatePrescription(EndEncounterPrescriptionAddDto prescriptionDto, int patientId, int encounterId, string publisher)
+		[Obsolete("Use POST /api/Encounter/{encounterId}/prescription; will be removed after Slice 5.")]
+		private Task CreatePrescription(EndEncounterPrescriptionAddDto prescriptionDto, int patientId, int encounterId, string publisher)
 		{	
-			var now = DateTime.UtcNow.AddHours(2);
-
-			var prescription = new Prescription
-			{
-				Publisher =publisher,
-				PatientId = patientId,
-				PrescriptionDate = now,
-				EncounterId = encounterId,
-				NameIdentifier = $"{patientId}-{Regex.Replace(publisher, @"\s+", "")}-{now:yyyyMMddHHmmss}",
-				PatientMedicines = await CreatePatientMedicines(prescriptionDto.Medicines, patientId)
-			};
-
-			await _context.Prescriptions.AddAsync(prescription);
-		}
-
-		private async Task<List<PatientMedicine>> CreatePatientMedicines(
-			ICollection<PatientMedicineAddDto> medicines, 
-			int patientId)
-		{
-			return medicines.Select(medicineDto => new PatientMedicine
-			{
-				PatientId = patientId,
-				MedicineId = medicineDto.MedicineId,
-				FrequencyInHours = medicineDto.FrequencyInHours,
-				DurationInDays = medicineDto.DurationInDays,
-				IsPrescribed = medicineDto.IsPrescribed,
-				AddedDate = DateTime.UtcNow.AddHours(2),
-				Dosage = medicineDto.Dosage
-			}).ToList();
+			throw new NotImplementedException("Use POST /api/Encounter/{encounterId}/prescription.");
 		}
 
 		private async Task<List<LabTestResult>> CreateLabTestValues(int LabTestId,ICollection<LabTestResultDto> Results){
@@ -327,7 +298,9 @@ namespace HealthMate.Infrastructure.Repositories.HealthCareProviderRepos
 				// 4. Create prescription if provided
 				if (endEcounterDto.Prescription != null)
 				{
+#pragma warning disable CS0618
 					await CreatePrescription(endEcounterDto.Prescription, PatientId, encounterId, prescriptionPub);
+#pragma warning restore CS0618
 				}
 
 				// 5. Create LabTest If Provided

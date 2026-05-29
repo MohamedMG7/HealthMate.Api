@@ -2,6 +2,7 @@ using HealthMate.Domain.Aggregates.Condition;
 using HealthMate.Domain.Aggregates.Encounter;
 using HealthMate.Domain.Aggregates.Observation;
 using HealthMate.Domain.Aggregates.Patient;
+using HealthMate.Domain.Aggregates.Prescription;
 using HealthMate.Infrastructure.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -37,7 +38,7 @@ namespace HealthMate.Infrastructure.Data.DbHelper
 		public DbSet<LabTestAttribute> LabTestAttributes { get; set; }
 		public DbSet<LabTestResult> LabTestResults { get; set; }
 		public DbSet<Prescription> Prescriptions { get; set; }
-		public DbSet<PatientMedicine> PatientMedicines { get; set; }
+		public DbSet<PrescriptionMedicine> PrescriptionMedicines { get; set; }
 		public DbSet<MedicalImage> MedicalImages { get; set; }
 		public DbSet<Medicine> Medicines { get; set; }
 		public DbSet<Message> Messages { get; set; }

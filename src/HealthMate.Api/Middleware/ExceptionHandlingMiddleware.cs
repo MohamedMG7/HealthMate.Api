@@ -3,6 +3,7 @@ using HealthMate.Application.Common.Exceptions;
 using HealthMate.Domain.Aggregates.Condition;
 using HealthMate.Domain.Aggregates.Encounter;
 using HealthMate.Domain.Aggregates.Patient;
+using HealthMate.Domain.Aggregates.Prescription;
 using HealthMate.Domain.Common;
 using HealthMate.Fhir.Ports;
 using Microsoft.AspNetCore.Mvc;
@@ -21,6 +22,9 @@ public sealed class ExceptionHandlingMiddleware(
         [typeof(DiseaseNotFoundForConditionException)] = (StatusCodes.Status404NotFound, "disease_not_found_for_condition", "The disease could not be found."),
         [typeof(PatientNotFoundForEncounterException)] = (StatusCodes.Status404NotFound, "patient_not_found_for_encounter", "The patient could not be found."),
         [typeof(HealthCareProviderNotFoundForEncounterException)] = (StatusCodes.Status404NotFound, "health_care_provider_not_found_for_encounter", "The health care provider could not be found."),
+        [typeof(PrescriptionNotFoundException)] = (StatusCodes.Status404NotFound, "prescription_not_found", "The prescription could not be found."),
+        [typeof(MedicineNotFoundForPrescriptionException)] = (StatusCodes.Status404NotFound, "medicine_not_found_for_prescription", "The medicine could not be found."),
+        [typeof(PrescriptionAlreadyExistsForEncounterException)] = (StatusCodes.Status409Conflict, "prescription_already_exists_for_encounter", "The prescription conflicts with existing data."),
         [typeof(PatientNotFoundException)] = (StatusCodes.Status404NotFound, "patient_not_found", "The patient could not be found."),
         [typeof(PatientAlreadyExistsException)] = (StatusCodes.Status409Conflict, "patient_conflict", "The patient conflicts with existing data.")
     };
