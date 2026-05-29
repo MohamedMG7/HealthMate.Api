@@ -18,6 +18,7 @@ using HealthMate.Application.Manager.MessageManager;
 using HealthMate.Application.Manager.ObservationManager;
 using HealthMate.Application.Manager.PatientManager;
 using HealthMate.Application.Managers;
+using HealthMate.Application.Encounters.Services;
 using HealthMate.Application.Patients.Services;
 using HealthMate.Application.Prescriptions.Contracts.Medicines;
 using HealthMate.Domain.Aggregates.Condition;
@@ -32,6 +33,7 @@ using HealthMate.Infrastructure.Fhir;
 using HealthMate.Infrastructure.Identity.Adapters;
 using HealthMate.Infrastructure.Identity.Repositories;
 using HealthMate.Infrastructure.Identity.Services;
+using HealthMate.Infrastructure.Persistence.Readers;
 using HealthMate.Infrastructure.Persistence.Repositories;
 using HealthMate.Infrastructure.Repositories;
 using HealthMate.Infrastructure.Repositories.AdminRepos;
@@ -161,6 +163,7 @@ public static class DependencyInjection
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IFileStorage, LocalFileStorage>();
 
+        services.AddScoped<IEncounterHistoryReader, EfEncounterHistoryReader>();
         services.AddScoped<IPatientAccountReader, EfPatientAccountReader>();
         services.AddScoped<IFhirPatientStore, InProcessFhirPatientStore>();
         services.AddScoped<ISinaClock, SystemSinaClock>();

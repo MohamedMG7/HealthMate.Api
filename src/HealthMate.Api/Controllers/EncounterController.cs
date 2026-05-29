@@ -29,6 +29,7 @@ namespace HealthMate.Api.Controllers
 		}
 
 		[HttpGet]
+		[Obsolete("Use GET /api/Patient/{patientId}/encounters; will be removed after the iteration cleanup PR.")]
 		public IActionResult GetAllEncounters()
 		{
 			var Conditions = _encounterManager.GetAllEncounters();
