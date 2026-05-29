@@ -24,6 +24,7 @@ using HealthMate.Domain.Aggregates.Condition;
 using HealthMate.Domain.Aggregates.Encounter;
 using HealthMate.Domain.Aggregates.Observation;
 using HealthMate.Domain.Aggregates.Patient;
+using HealthMate.Domain.Aggregates.Prescription;
 using HealthMate.Fhir.Ports;
 using HealthMate.Infrastructure.Data.DbHelper;
 using HealthMate.Infrastructure.Data.Models;
@@ -136,6 +137,7 @@ public static class DependencyInjection
         services.AddScoped<IEncounterRepository, EfEncounterRepository>();
         services.AddScoped<IObservationRepository, EfObservationRepository>();
         services.AddScoped<IPatientRepository, EfPatientRepository>();
+        services.AddScoped<IPrescriptionRepository, EfPrescriptionRepository>();
         services.AddScoped<IPatientAllergyRepo, PatientAllergyRepo>();
         services.AddScoped<IObservationRepo, ObservationRepo>();
         services.AddScoped<IConditionRepo, ConditionRepo>();

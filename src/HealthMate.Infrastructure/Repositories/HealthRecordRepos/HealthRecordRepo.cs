@@ -76,15 +76,21 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 		public async Task<List<MedicineSummaryReadDto>> getMedicineSummary(int patientId){
 			await using var context = await _contextFactory.CreateDbContextAsync();
 
-			var result = await context.PatientMedicines.Where(p => p.PatientId == patientId).AsNoTracking().OrderByDescending(p => p.AddedDate).Select(p => new MedicineSummaryReadDto{
-				Name = p.Medicine.Name,
-				Date = p.AddedDate.ToString("yyyy-MM-dd"),
-				DosePerTime = p.Dosage,
-				DurationInDays = p.DurationInDays,
-				FrequencyInHours = p.FrequencyInHours,
-				patientMedicineId = p.PatientMedicineId,
-				isOngoing = (DateTime.UtcNow - p.AddedDate).TotalDays <= p.DurationInDays
-			}).ToListAsync();
+			var result = await (
+				from patientMedicine in context.PrescriptionMedicines.AsNoTracking()
+				join medicine in context.Medicines.AsNoTracking() on patientMedicine.MedicineId equals medicine.Id
+				where patientMedicine.PatientId == patientId
+				orderby patientMedicine.AddedDate descending
+				select new MedicineSummaryReadDto{
+					Name = medicine.Name,
+					Date = patientMedicine.AddedDate.ToString("yyyy-MM-dd"),
+					DosePerTime = patientMedicine.Dosage,
+					DurationInDays = patientMedicine.DurationInDays,
+					FrequencyInHours = patientMedicine.FrequencyInHours,
+					patientMedicineId = patientMedicine.Id,
+					isOngoing = (DateTime.UtcNow - patientMedicine.AddedDate).TotalDays <= patientMedicine.DurationInDays
+				})
+				.ToListAsync();
 
 			return result;
 		}
@@ -120,7 +126,7 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 				.AsNoTracking().OrderByDescending(p => p.PrescriptionDate)
 				.Select(p => new PrescriptionSummaryReadDto
 				{
-					PrescriptionId = p.PrescriptionId,
+					PrescriptionId = p.Id,
 					PrescriptionDate = p.PrescriptionDate.ToString("yyyy-MM-dd"),
 					ConditionName = p.EncounterId.HasValue
 						? context.Conditions
@@ -205,7 +211,7 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 			await using var context = await _contextFactory.CreateDbContextAsync();
 
 			var result = await context.Prescriptions
-				.Where(p => p.PrescriptionId == prescriptionId)
+				.Where(p => p.Id == prescriptionId)
 				.AsNoTracking()
 				.Select(p => new
 				{
@@ -234,9 +240,12 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 							.Select(row => row.disease.Display_Name)
 							.FirstOrDefault() ?? "Unknown"
 						: "Unknown",
-					Medicines = p.PatientMedicines.Select(m => new MedicineDetailsReadDto
+					Medicines = p.Medicines.Select(m => new MedicineDetailsReadDto
 					{
-						Name = m.Medicine.Name,
+						Name = context.Medicines
+							.Where(medicine => medicine.Id == m.MedicineId)
+							.Select(medicine => medicine.Name)
+							.FirstOrDefault() ?? "Unknown",
 						FrequencyInHours = m.FrequencyInHours,
 						DurationInDays = m.DurationInDays,
 						Dose = m.Dosage
@@ -363,10 +372,13 @@ namespace HealthMate.Infrastructure.Repositories.HealthRecordRepos
 			var medicines = await context.Prescriptions
 				.AsNoTracking()
 				.Where(prescription => prescription.EncounterId == encounter.Id)
-				.SelectMany(prescription => prescription.PatientMedicines!)
+				.SelectMany(prescription => prescription.Medicines)
 				.Select(medicine => new MedicineDetailsReadDto
 				{
-					Name = medicine.Medicine.Name,
+					Name = context.Medicines
+						.Where(referenceMedicine => referenceMedicine.Id == medicine.MedicineId)
+						.Select(referenceMedicine => referenceMedicine.Name)
+						.FirstOrDefault() ?? "Unknown",
 					FrequencyInHours = medicine.FrequencyInHours,
 					DurationInDays = medicine.DurationInDays,
 					Dose = medicine.Dosage

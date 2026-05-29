@@ -124,7 +124,7 @@ namespace HealthMate.Infrastructure.Repositories.ObservationRepos{
                 .Where(p => p.PatientId == patientId && p.PrescriptionImageUrl != null)
                 .Select(p => new DocumentDto
                 {
-                    Id = p.PrescriptionId,
+                    Id = p.Id,
                     Name = "Prescription",
                     Path = p.PrescriptionImageUrl!,
                     RecordedTime = p.PrescriptionDate.ToShortDateString()
