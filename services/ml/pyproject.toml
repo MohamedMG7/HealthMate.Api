@@ -5,7 +5,7 @@ description = "HealthMate ML inference sidecar"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "fastapi>=0.115,<0.120",
+    "fastapi==0.136.3",
     "uvicorn[standard]>=0.32,<0.40",
     "pydantic>=2.9,<3.0",
     "pydantic-settings>=2.5,<3.0",
